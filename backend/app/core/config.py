@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     
     # Supabase PostgreSQL or SQLite fallback for immediate local testing
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./skillcatalyst.db")
+
+    # Security & JWT Authentication
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "ascend-auth-secure-secret-key-change-in-production-2026")
+    JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
     
     # External AI and Job APIs
     OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "")
@@ -45,33 +50,24 @@ class Settings(BaseSettings):
 
     # Chroma Cloud Configuration
     CHROMA_API_KEY: Optional[str] = os.getenv("CHROMA_API_KEY", None)
-    CHROMA_TENANT: Optional[str] = os.getenv("CHROMA_TENANT", "214d5420-8e7c-4134-a9a5-f3b1689c790b")
-    CHROMA_DATABASE: Optional[str] = os.getenv("CHROMA_DATABASE", "GlobalHackathon")
+    CHROMA_TENANT: Optional[str] = os.getenv("CHROMA_TENANT", None)
+    CHROMA_DATABASE: Optional[str] = os.getenv("CHROMA_DATABASE", "default")
     CHROMA_USE_CLOUD: bool = os.getenv("CHROMA_USE_CLOUD", "false").lower() in ("true", "1", "yes")
 
     # CORS
     CORS_ORIGINS: Union[List[str], str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
     # ASCEND / n8n Webhook Integration
-    ASCEND_WEBHOOK_URL: str = os.getenv(
-        "ASCEND_WEBHOOK_URL",
-        os.getenv(
-            "N8N_WEBHOOK_URL",
-            "https://shivanallela36367677777.app.n8n.cloud/webhook/a08e294f-15d2-41e8-b4fa-591cea88a801"
-        )
-    )
+    ASCEND_WEBHOOK_URL: str = os.getenv("ASCEND_WEBHOOK_URL", os.getenv("N8N_WEBHOOK_URL", ""))
     ASCEND_WEBHOOK_KEY: Optional[str] = os.getenv("ASCEND_WEBHOOK_KEY", None)
     ASCEND_WEBHOOK_HEADER_NAME: str = os.getenv("ASCEND_WEBHOOK_HEADER_NAME", "X-Webhook-Key")
     ASCEND_WEB_URL: str = os.getenv("ASCEND_WEB_URL", os.getenv("FRONTEND_BASE_URL", "http://localhost:3000"))
-    N8N_WEBHOOK_ENABLED: bool = os.getenv("N8N_WEBHOOK_ENABLED", "true").lower() in ("true", "1", "yes")
+    N8N_WEBHOOK_ENABLED: bool = os.getenv("N8N_WEBHOOK_ENABLED", "false").lower() in ("true", "1", "yes")
     FRONTEND_BASE_URL: str = os.getenv("FRONTEND_BASE_URL", "http://localhost:3000")
 
     # ASCEND / n8n Scholarship Eligibility Webhook Integration
-    ASCEND_SCHOLARSHIP_WEBHOOK_URL: str = os.getenv(
-        "ASCEND_SCHOLARSHIP_WEBHOOK_URL",
-        "https://shivanallela36367677777.app.n8n.cloud/webhook/scholarship-check-api"
-    )
-    N8N_SCHOLARSHIP_WEBHOOK_ENABLED: bool = os.getenv("N8N_SCHOLARSHIP_WEBHOOK_ENABLED", "true").lower() in ("true", "1", "yes")
+    ASCEND_SCHOLARSHIP_WEBHOOK_URL: str = os.getenv("ASCEND_SCHOLARSHIP_WEBHOOK_URL", "")
+    N8N_SCHOLARSHIP_WEBHOOK_ENABLED: bool = os.getenv("N8N_SCHOLARSHIP_WEBHOOK_ENABLED", "false").lower() in ("true", "1", "yes")
 
     @field_validator("DATABASE_URL", mode="before")
     @classmethod

@@ -3,7 +3,7 @@
 import React, { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { api } from "@/lib/api";
 import { ArrowRight, Loader2, AlertCircle, Lock, Mail, User, GraduationCap } from "lucide-react";
 import AscendLogo from "@/components/common/AscendLogo";
@@ -12,6 +12,7 @@ function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialMode = searchParams.get("mode") === "signup" ? "signup" : "login";
+  const shouldReduceMotion = useReducedMotion();
 
   const [mode, setMode] = useState<"login" | "signup">(initialMode);
   const [name, setName] = useState("");
@@ -74,9 +75,9 @@ function AuthForm() {
   return (
     <div className="flex-1 flex items-center justify-center px-4 py-16">
       <motion.div
-        initial={{ opacity: 0, scale: 0.96 }}
+        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: shouldReduceMotion ? 0 : 0.3 }}
         className="w-full max-w-md bg-[#14141C] border border-[#282838] rounded-3xl p-8 sm:p-9 shadow-2xl relative overflow-hidden"
       >
         {/* Ambient background glow */}
@@ -148,16 +149,18 @@ function AuthForm() {
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === "signup" && (
             <div>
-              <label className="block text-xs font-medium text-[#A1A1AA] mb-1.5">
+              <label htmlFor="login-name" className="block text-xs font-medium text-[#A1A1AA] mb-1.5">
                 Full Name
               </label>
               <div className="relative">
                 <User className="w-4 h-4 text-[#6A6A7E] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
+                  id="login-name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="e.g. Priya Varma"
+                  aria-label="Full Name"
                   className="w-full pl-10 pr-3.5 py-2.5 text-sm dark-input placeholder-[#5E5E6E] focus:outline-none"
                   required
                 />
@@ -166,16 +169,18 @@ function AuthForm() {
           )}
 
           <div>
-            <label className="block text-xs font-medium text-[#A1A1AA] mb-1.5">
+            <label htmlFor="login-email" className="block text-xs font-medium text-[#A1A1AA] mb-1.5">
               Email Address
             </label>
             <div className="relative">
               <Mail className="w-4 h-4 text-[#6A6A7E] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
+                id="login-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="e.g. student@example.edu"
+                aria-label="Email Address"
                 className="w-full pl-10 pr-3.5 py-2.5 text-sm dark-input placeholder-[#5E5E6E] focus:outline-none"
                 autoComplete="email"
                 required
@@ -184,16 +189,18 @@ function AuthForm() {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-[#A1A1AA] mb-1.5">
+            <label htmlFor="login-password" className="block text-xs font-medium text-[#A1A1AA] mb-1.5">
               Password
             </label>
             <div className="relative">
               <Lock className="w-4 h-4 text-[#6A6A7E] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
+                id="login-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
+                aria-label="Password"
                 className="w-full pl-10 pr-3.5 py-2.5 text-sm dark-input placeholder-[#5E5E6E] focus:outline-none"
                 autoComplete={mode === "signup" ? "new-password" : "current-password"}
                 required
@@ -203,14 +210,16 @@ function AuthForm() {
 
           {mode === "signup" && (
             <div>
-              <label className="block text-xs font-medium text-[#A1A1AA] mb-1.5">
+              <label htmlFor="login-stage" className="block text-xs font-medium text-[#A1A1AA] mb-1.5">
                 Current Education Stage
               </label>
               <div className="relative">
                 <GraduationCap className="w-4 h-4 text-[#6A6A7E] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <select
+                  id="login-stage"
                   value={stage}
                   onChange={(e) => setStage(e.target.value)}
+                  aria-label="Current Education Stage"
                   className="w-full pl-10 pr-3.5 py-2.5 text-sm dark-input text-white focus:outline-none cursor-pointer"
                 >
                   <option value="b_tech" className="bg-[#14141C] text-white">B.Tech Engineering (1st–4th Year)</option>

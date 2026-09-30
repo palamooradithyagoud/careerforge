@@ -26,6 +26,7 @@ class Student(Base):
     location = Column(String(255), nullable=True)
     education_stage = Column(String(50), nullable=False, index=True)  # class_10, intermediate, b_tech
     target_role = Column(String(255), nullable=True)
+    password_hash = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=now_utc, nullable=False)
     updated_at = Column(DateTime, default=now_utc, onupdate=now_utc, nullable=False)
 

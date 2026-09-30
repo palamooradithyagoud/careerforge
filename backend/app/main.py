@@ -10,17 +10,44 @@ from backend.app.seeds.seed_data import seed_database
 from backend.app.seeds.agent_seed_data import seed_agent_data
 
 
+import os
+import logging
+from sqlalchemy import text
+
+logger = logging.getLogger(__name__)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Ensure tables and seed data exist
-    Base.metadata.create_all(bind=engine)
-    apply_migrations()
+    # Application boot: verify database connectivity without running heavy mutations
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        logger.info("[Startup] Database connection verified successfully.")
+    except Exception as exc:
+        logger.error(f"[Startup] Database connectivity check failed: {exc}")
+
+    # Explicit opt-in for containerized zero-setup testing (disabled by default in production)
+    if os.getenv("RUN_MIGRATIONS_ON_STARTUP", "false").lower() in ("true", "1", "yes"):
+        logger.info("[Startup] Running database migrations on startup (opt-in)...")
+        Base.metadata.create_all(bind=engine)
+        apply_migrations()
+
+    if os.getenv("RUN_SEEDS_ON_STARTUP", "false").lower() in ("true", "1", "yes"):
+        logger.info("[Startup] Seeding database on startup (opt-in)...")
+        db = SessionLocal()
+        try:
+            seed_database(db)
+            seed_agent_data(db)
+        finally:
+            db.close()
+
+    # Pre-warm read-only cache safely (non-destructive)
     db = SessionLocal()
     try:
-        seed_database(db)
-        seed_agent_data(db)
-        # Pre-warm connection pool and in-memory cache for zero cold-start delay
         cache.warm_up(db)
+    except Exception as exc:
+        logger.warning(f"[Startup] Cache warm-up notice: {exc}")
     finally:
         db.close()
 

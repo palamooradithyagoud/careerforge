@@ -14,9 +14,9 @@
 
 ## 🌟 Executive Summary
 
-**ASCEND** is an enterprise-grade, end-to-end student navigation and career acceleration ecosystem. Engineered with state-of-the-art AI architecture, ASCEND builds an adaptive, verifiable student intelligence profile that evolves alongside the learner—from **Class 10 foundational exploration** and **Intermediate (+2) stream specialization** through **B.Tech / Higher Education professionalization**.
+**ASCEND** is an AI-powered student navigation and career acceleration platform. Engineered with an adaptive, verifiable student intelligence profile, ASCEND supports learners across educational tiers—from **Class 10 foundational exploration** and **Intermediate (+2) stream specialization** through **B.Tech / Higher Education professionalization**.
 
-ASCEND seamlessly bridges academic achievement with institutional outcomes through **Chroma Cloud vector-retrieval (RAG)**, deterministic scholarship scoring, live industry job aggregation, curriculum roadmaps with video coursework, **⚡ Skill Bits** (short-form 30–60s technical reels), **📰 Tech News** (personalized industry intelligence), and an autonomous **Domain-Based AI Agent** fortified with automated multi-LLM failover.
+ASCEND connects academic achievement with institutional outcomes through **Chroma Cloud vector-retrieval (RAG)**, deterministic scholarship scoring, live industry job aggregation via Jooble, curriculum roadmaps with video coursework, **⚡ Skill Bits** (short-form technical micro-learning), **📰 Tech News** (personalized industry intelligence), and an autonomous **Domain-Based AI Agent** fortified with automated multi-LLM failover (Groq ↔ Google Gemini).
 
 By connecting Tech News directly to Skill Bits, Skill Tracks, and Job Pathways, ASCEND establishes a powerful closed-loop product flywheel:  
 $$\boxed{\textbf{Discover} \longrightarrow \textbf{Understand} \longrightarrow \textbf{Learn} \longrightarrow \textbf{Apply}}$$
@@ -327,16 +327,19 @@ careerforge/
 
 ## ⚙️ Environment Variables
 
-Create `.env` in the `backend/` directory:
-
-```env
 # Database (Supabase PostgreSQL Connection Pooling)
 DATABASE_URL=postgresql://<user>:<password>@<pooler-host>:5432/postgres
 ENVIRONMENT=development
+RUN_MIGRATIONS_ON_STARTUP=false
+RUN_SEEDS_ON_STARTUP=false
+
+# Security & Authentication
+JWT_SECRET_KEY=your_jwt_signing_secret_min_32_chars
+ACCESS_TOKEN_EXPIRE_MINUTES=1440
 
 # Primary AI Reasoning Engine (Groq)
-GROQ_API_KEY=gsk_your_groq_api_key
-GROQ_MODEL=qwen/qwen3.8-27b
+GROQ_API_KEY=your_groq_api_key
+GROQ_MODEL=llama-3.3-70b-versatile
 
 # Automatic Failover AI Engine (Google Gemini)
 GEMINI_API_KEY=your_gemini_api_key
@@ -345,7 +348,7 @@ GEMINI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai
 
 # Chroma Cloud Vector Database
 CHROMA_USE_CLOUD=true
-CHROMA_API_KEY=ck-your_chroma_cloud_key
+CHROMA_API_KEY=your_chroma_cloud_key
 CHROMA_TENANT=your_tenant_id
 CHROMA_DATABASE=GlobalHackathon
 CHROMA_COLLECTION_NAME=scholarships
@@ -358,7 +361,7 @@ YOUTUBE_API_KEY=your_youtube_v3_api_key
 
 # Event Automation (n8n Cloud)
 N8N_WEBHOOK_URL=https://your-instance.app.n8n.cloud/webhook/ascend-welcome
-N8N_WEBHOOK_ENABLED=true
+N8N_WEBHOOK_ENABLED=false
 FRONTEND_BASE_URL=http://localhost:3000
 ```
 
@@ -371,7 +374,17 @@ FRONTEND_BASE_URL=http://localhost:3000
 - **Python**: v3.10 or higher
 - **Package Managers**: `npm` & `pip`
 
-### 2. Backend Setup
+### 2. Database Migrations & Seeding (Decoupled Process)
+Database migrations and seed data are decoupled from application startup to ensure rapid boot times and prevent concurrent replica write conflicts:
+```bash
+# Apply schema migrations (adds password_hash and schema updates)
+python -m backend.app.manage migrate
+
+# Seed baseline catalogs (idempotent, safe to rerun)
+python -m backend.app.manage seed
+```
+
+### 3. Backend Setup
 ```bash
 # Navigate to backend directory
 cd backend
@@ -386,7 +399,7 @@ python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 - Interactive Swagger UI: `http://127.0.0.1:8000/docs`
 - ReDoc Documentation: `http://127.0.0.1:8000/redoc`
 
-### 3. Frontend Setup
+### 4. Frontend Setup
 ```bash
 # Navigate to frontend directory
 cd frontend
@@ -399,23 +412,28 @@ npm run dev
 ```
 - Web Application: `http://localhost:3000`
 
-### 4. Running Automated Tests
+### 5. Running Automated Tests
 ```bash
-# Execute Pytest suite
-pytest backend/tests/ -v
+# Execute Backend Pytest suite (Auth, IDOR, AI Fallback, RAG Security)
+python -m pytest backend/tests/test_auth_and_security.py -v
+
+# Execute Frontend automated test suite
+cd frontend && npm test
 ```
 
 ---
 
-## 🔒 Security & Enterprise Reliability
+## 🔒 Security & Reliability Architecture
 
-- **Graceful Multi-LLM Degradation**: Prevents conversational downtime by catching `RateLimitError` or HTTP 429 exceptions from Groq and hot-swapping execution to Google Gemini without losing conversational state.
-- **SQLAlchemy Connection Pooling**: Utilizes Supabase transaction-level connection pooling to prevent connection starvation under high concurrent traffic.
-- **Client & Server Cache Warm-Up**: Pre-warms scholarship inventories and vector collections during server initialization, guaranteeing sub-50ms response times for first-time visitors.
-- **Sanitized Vector Ingestion**: Strict PDF and metadata chunking sanitization eliminates prompt injection vectors before documents enter Chroma Cloud.
+- **Bcrypt Password Security & JWT Authentication**: User passwords are cryptographically hashed using standard bcrypt (cost factor 12) before persistence. JWT access tokens encode issued-at and expiration claims with strict verification.
+- **Strict IDOR (Insecure Direct Object Reference) Prevention**: Reusable FastAPI security dependencies verify that the authenticated identity matches the requested resource for all student-specific data (profiles, scholarships, saved jobs, conversation history).
+- **Asynchronous AI Reliability & Bounded Fallback**: AI orchestrators utilize `AsyncGroq` with bounded 4.0s timeout budgets and non-blocking event loops. Rate limits (HTTP 429) automatically fail over to Google Gemini or structured fallback analysis.
+- **RAG Prompt Injection Defense**: Documents retrieved from vector databases are strictly isolated inside `<untrusted_retrieved_context>` blocks and treated as passive untrusted data, preventing prompt extraction or instruction overrides.
+- **SQLAlchemy Connection Pooling**: Utilizes Supabase transaction-level connection pooling to prevent connection starvation under concurrent requests.
+- **Decoupled Lifespan Operations**: Application startup is separated from schema DDL migrations and database seeding, ensuring zero cold-start bottlenecks.
 
 ---
 
 ## 📄 License
-Developed for the **Global Hackathon** — Engineered by Palamoor Adithya Goud & Team.  
+Developed for the **opti forge 26** — Engineered by Palamoor Adithya Goud & Team.  
 Distributed under the MIT License.

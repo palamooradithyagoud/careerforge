@@ -337,6 +337,7 @@ class RegisterRequest(BaseModel):
 
 class AuthResponse(BaseModel):
     token: str
+    token_type: str = "bearer"
     student_id: Optional[str] = None
     email: str
     name: str

@@ -20,13 +20,39 @@ const API_BASE_URL = getBaseUrl();
 const clientCache = new Map<string, { data: any; timestamp: number }>();
 const CLIENT_CACHE_TTL_MS = 120 * 1000; // 2 minutes
 
+const getAuthHeaders = (): Record<string, string> => {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem("skillcatalyst_session");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed?.token && typeof parsed.token === "string") {
+        const trimmed = parsed.token.trim();
+        // Validate JWT structure: exactly 3 segments separated by dots
+        if (trimmed.split(".").length === 3) {
+          return { Authorization: `Bearer ${trimmed}` };
+        } else {
+          // Stale legacy/un-hashed token in browser: purge it
+          console.warn("[Auth] Found malformed token without 3 segments; purging stale session.");
+          localStorage.removeItem("skillcatalyst_session");
+        }
+      }
+    }
+  } catch {
+    // Ignore storage parse errors
+  }
+  return {};
+};
+
 async function fetchJSON<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
   try {
+    const authHeaders = getAuthHeaders();
     const res = await fetch(url, {
       ...options,
       headers: {
         "Content-Type": "application/json",
+        ...authHeaders,
         ...(options?.headers || {}),
       },
     });
@@ -39,6 +65,12 @@ async function fetchJSON<T>(endpoint: string, options?: RequestInit): Promise<T>
       } catch {
         // use default status message
       }
+
+      // Purge invalid/expired token so the browser does not stay stuck in a loop
+      if (res.status === 401 && typeof window !== "undefined") {
+        localStorage.removeItem("skillcatalyst_session");
+      }
+
       throw new Error(errorDetail);
     }
 
@@ -74,6 +106,10 @@ export const api = {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role: "demo_student", education_stage: stage }),
       });
+      if (typeof window !== "undefined" && res?.token) {
+        localStorage.setItem("skillcatalyst_session", JSON.stringify(res));
+        window.dispatchEvent(new Event("storage"));
+      }
       return res;
     },
 

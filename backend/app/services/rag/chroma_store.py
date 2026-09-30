@@ -38,8 +38,8 @@ class ChromaVectorStore(BaseVectorStore):
         self.collection_name = collection_name or settings.CHROMA_COLLECTION_NAME or "skillcatalyst_knowledge"
         self.embedder = embedder or embedding_provider
         self.api_key = api_key or settings.CHROMA_API_KEY
-        self.tenant = tenant or settings.CHROMA_TENANT or "214d5420-8e7c-4134-a9a5-f3b1689c790b"
-        self.database = database or settings.CHROMA_DATABASE or "GlobalHackathon"
+        self.tenant = tenant or settings.CHROMA_TENANT
+        self.database = database or settings.CHROMA_DATABASE or "default"
         self.use_cloud = use_cloud if use_cloud is not None else settings.CHROMA_USE_CLOUD
         self._client = None
         self._collection = None

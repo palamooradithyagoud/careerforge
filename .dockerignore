@@ -1,0 +1,26 @@
+# Docker build ignore rules for ASCEND
+.env
+.env.*
+*.env
+backend/.env*
+frontend/.env*
+node_modules
+*/node_modules
+__pycache__
+*/__pycache__
+*/*/__pycache__
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache
+.git
+.gitignore
+*.log
+npm-debug.log*
+.vercel
+frontend/.next
+frontend/out
+frontend/build
+backend/app/temp_uploads/
+data/
+backend/data/chroma/

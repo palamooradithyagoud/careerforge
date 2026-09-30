@@ -87,8 +87,8 @@ class AgentOrchestrator:
             while iteration < self.max_iterations:
                 iteration += 1
 
-                # On turn 2+, if tools have already been executed, force final synthesis
-                allow_tools = bool(iteration == 1 and not tools_used)
+                # Allow tools on turns prior to max_iterations; force final synthesis on the final turn
+                allow_tools = bool(iteration < self.max_iterations)
 
                 # Call LLM with native function calling
                 response_message = await self._call_llm_with_tools(messages, allow_tools=allow_tools, context=context)
@@ -211,7 +211,7 @@ class AgentOrchestrator:
             for model_to_use in candidate_models:
                 try:
                     import groq
-                    client = groq.Groq(api_key=settings.GROQ_API_KEY, timeout=14.0)
+                    client = groq.AsyncGroq(api_key=settings.GROQ_API_KEY, timeout=4.0)
                     kwargs = {
                         "model": model_to_use,
                         "messages": messages,
@@ -222,7 +222,7 @@ class AgentOrchestrator:
                         kwargs["tools"] = tools_list
                         kwargs["tool_choice"] = "auto"
 
-                    completion = client.chat.completions.create(**kwargs)
+                    completion = await client.chat.completions.create(**kwargs)
                     msg = completion.choices[0].message
                     tool_calls_data = None
                     if msg.tool_calls and allow_tools:
@@ -243,6 +243,10 @@ class AgentOrchestrator:
                         "tool_calls": tool_calls_data
                     }
                 except Exception as e:
+                    is_rate_limit = "429" in str(e) or "rate" in str(e).lower()
+                    if is_rate_limit:
+                        logger.warning(f"[AgentOrchestrator] Groq rate limited (429): {e}. Fast failover to Gemini.")
+                        break
                     logger.warning(f"[AgentOrchestrator] Groq call with model '{model_to_use}' failed: {e}")
                     continue
 
@@ -276,7 +280,12 @@ class AgentOrchestrator:
                         if m.get("role") in ("system", "user"):
                             gemini_messages.append(m)
                         elif m.get("role") == "tool":
-                            tool_data_chunks.append(f"[{m.get('name', 'tool')} output]: {m.get('content')}")
+                            tool_name = m.get('name', 'tool')
+                            tool_content = m.get('content', '')
+                            if tool_name == "searchKnowledgeBase":
+                                tool_data_chunks.append(f"<untrusted_retrieved_context tool='{tool_name}'>\n{tool_content}\n</untrusted_retrieved_context>")
+                            else:
+                                tool_data_chunks.append(f"[{tool_name} output]: {tool_content}")
 
                     if tool_data_chunks:
                         gemini_messages.append({
@@ -315,7 +324,7 @@ class AgentOrchestrator:
                         body["tools"] = tools_list
                         body["tool_choice"] = "auto"
 
-                    async with httpx.AsyncClient(timeout=30.0) as client:
+                    async with httpx.AsyncClient(timeout=4.0) as client:
                         resp = await client.post(gemini_url, headers=headers, json=body)
                         if resp.status_code == 200:
                             data = resp.json()

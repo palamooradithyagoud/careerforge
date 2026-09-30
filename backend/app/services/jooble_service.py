@@ -2,6 +2,7 @@ import re
 import html
 import json
 import logging
+import time
 import httpx
 from datetime import datetime
 from typing import List, Dict, Any, Optional
@@ -106,6 +107,32 @@ class JoobleService:
     def __init__(self):
         self.api_key = settings.JOOBLE_API_KEY
         self.base_url = f"https://jooble.org/api/{self.api_key}"
+        # In-memory query cache: key -> (timestamp, data) with 15-minute TTL
+        self._cache: Dict[str, tuple[float, Dict[str, Any]]] = {}
+        self._cache_ttl_seconds = 900.0  # 15 minutes
+        self._max_cache_entries = 200
+
+    def _get_cache_key(self, keyword: str, location: str, page: int) -> str:
+        return f"{keyword.strip().lower()}:{location.strip().lower()}:{page}"
+
+    def _get_cached_query(self, key: str) -> Optional[Dict[str, Any]]:
+        now = time.time()
+        entry = self._cache.get(key)
+        if entry:
+            ts, data = entry
+            if now - ts < self._cache_ttl_seconds:
+                return data
+            else:
+                self._cache.pop(key, None)
+        return None
+
+    def _set_cached_query(self, key: str, data: Dict[str, Any]):
+        if len(self._cache) >= self._max_cache_entries:
+            # Evict oldest entry
+            oldest_key = min(self._cache.keys(), key=lambda k: self._cache[k][0], default=None)
+            if oldest_key:
+                self._cache.pop(oldest_key, None)
+        self._cache[key] = (time.time(), data)
 
     async def search_and_cache_jobs(
         self,
@@ -116,47 +143,72 @@ class JoobleService:
         limit: int = 20
     ) -> Dict[str, Any]:
         """
-        Fetches live jobs from Jooble API, extracts required skills,
-        persists into the database cache, and returns normalized jobs.
+        Fetches live jobs from Jooble API with bounded TTL cache.
+        If Jooble fails or rate-limits, falls back to DB/curated jobs
+        and clearly flags service status and is_live_jooble=False.
         """
+        cache_key = self._get_cache_key(keyword, location, page)
+        cached_result = self._get_cached_query(cache_key)
+        if cached_result:
+            logger.info(f"[Jooble Cache] Cache HIT for key='{cache_key}'")
+            return cached_result
+
         raw_items = []
         total_count = 0
+        is_live = False
+        status_message = "Live Jooble feed"
 
-        # Query Jooble API
-        try:
-            async with httpx.AsyncClient(timeout=15.0) as client:
-                resp = await client.post(
-                    self.base_url,
-                    json={
-                        "keywords": keyword,
-                        "location": location or "India",
-                        "page": page
-                    },
-                    headers={
-                        "Content-Type": "application/json",
-                        "User-Agent": "SkillCatalyst-BTech-Portal/1.0"
-                    }
-                )
-                if resp.status_code == 200:
-                    data = resp.json()
-                    total_count = data.get("totalCount", 0)
-                    raw_items = data.get("jobs", [])
-                else:
-                    logger.warning(f"[Jooble API] Status {resp.status_code}: {resp.text[:200]}")
-        except Exception as exc:
-            logger.warning(f"[Jooble API] Request exception: {exc}")
+        # Query Jooble API with bounded 4.0s timeout
+        if self.api_key:
+            try:
+                async with httpx.AsyncClient(timeout=4.0) as client:
+                    resp = await client.post(
+                        self.base_url,
+                        json={
+                            "keywords": keyword,
+                            "location": location or "India",
+                            "page": page
+                        },
+                        headers={
+                            "Content-Type": "application/json",
+                            "User-Agent": "SkillCatalyst-BTech-Portal/1.0"
+                        }
+                    )
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        total_count = data.get("totalCount", 0)
+                        raw_items = data.get("jobs", [])
+                        if raw_items:
+                            is_live = True
+                    elif resp.status_code == 429:
+                        status_message = "Jooble rate limit reached (HTTP 429). Showing cached database opportunities."
+                        logger.warning(f"[Jooble API] Rate limited (429): {resp.text[:150]}")
+                    else:
+                        status_message = f"Live job service returned HTTP {resp.status_code}. Showing cached database opportunities."
+                        logger.warning(f"[Jooble API] Status {resp.status_code}: {resp.text[:150]}")
+            except httpx.TimeoutException:
+                status_message = "Live job service request timed out. Showing cached opportunities."
+                logger.warning("[Jooble API] Request timed out (4.0s budget exceeded).")
+            except Exception as exc:
+                status_message = "Live job service unavailable. Showing cached opportunities."
+                logger.warning(f"[Jooble API] Request exception: {exc}")
+        else:
+            status_message = "Live job service key not configured. Showing cached opportunities."
 
         if not raw_items:
-            # Use cached jobs from DB if available, else curated fallback
+            # Fallback to cached jobs from DB or curated pool
             db_cached = db.query(Job).order_by(Job.created_at.desc()).limit(limit).all()
             if db_cached:
-                return {
+                fallback_resp = {
                     "total_count": len(db_cached),
                     "page": page,
                     "location": location,
                     "keyword": keyword,
-                    "jobs": [self.job_model_to_dict(j) for j in db_cached]
+                    "is_live_jooble": False,
+                    "service_status": status_message,
+                    "jobs": [self.job_model_to_dict(j, is_live=False) for j in db_cached]
                 }
+                return fallback_resp
             raw_items = FALLBACK_JOBS
             total_count = len(FALLBACK_JOBS)
 
@@ -248,19 +300,28 @@ class JoobleService:
                     "required_skills": extracted,
                     "matched_skills": [s["skill"] for s in extracted[:3]],
                     "posted_at": datetime.utcnow().isoformat(),
-                    "is_live_jooble": True
+                    "is_live_jooble": is_live
                 })
 
-        return {
+        result = {
             "total_count": total_count,
             "page": page,
             "location": location,
             "keyword": keyword,
+            "is_live_jooble": is_live,
+            "service_status": status_message if not is_live else "Live Jooble feed",
             "new_jobs_persisted": len(new_jobs_to_insert),
             "jobs": normalized_jobs
         }
+        self._set_cached_query(cache_key, result)
+        return result
 
-    def job_model_to_dict(self, job: Job, extracted_skills: Optional[List[Dict[str, Any]]] = None) -> Dict[str, Any]:
+    def job_model_to_dict(
+        self,
+        job: Job,
+        extracted_skills: Optional[List[Dict[str, Any]]] = None,
+        is_live: bool = True
+    ) -> Dict[str, Any]:
         if not extracted_skills:
             try:
                 extracted_skills = json.loads(job.required_skills_json) if job.required_skills_json else []
@@ -288,7 +349,7 @@ class JoobleService:
             "required_skills": extracted_skills,
             "matched_skills": [s["skill"] for s in extracted_skills[:3]],
             "posted_at": job.posted_at.isoformat() if job.posted_at else None,
-            "is_live_jooble": True
+            "is_live_jooble": is_live
         }
 
     def search_jobs(
@@ -296,22 +357,24 @@ class JoobleService:
         db: Session,
         keyword: str = "Software Engineer",
         location: str = "India",
+        page: int = 1,
         limit: int = 5
     ) -> Dict[str, Any]:
         """
-        Synchronous job search for agent tools.
-        Tries Jooble API, falls back to DB cached jobs, and then curated verified jobs.
+        Synchronous job search for agent tools and domain services.
+        Tries Jooble API with 4.0s timeout, falls back to DB cached jobs, and then curated verified jobs.
         """
         raw_items = []
+        is_live = False
         if self.api_key:
             try:
-                with httpx.Client(timeout=6.0) as client:
+                with httpx.Client(timeout=4.0) as client:
                     resp = client.post(
                         self.base_url,
                         json={
                             "keywords": keyword,
                             "location": location or "India",
-                            "page": 1
+                            "page": page
                         },
                         headers={
                             "Content-Type": "application/json",
@@ -320,6 +383,8 @@ class JoobleService:
                     )
                     if resp.status_code == 200:
                         raw_items = resp.json().get("jobs", [])
+                        if raw_items:
+                            is_live = True
             except Exception as exc:
                 logger.warning(f"[Jooble API sync] Request exception: {exc}")
 
@@ -339,19 +404,20 @@ class JoobleService:
                     "link": item.get("link") or "https://jooble.org",
                     "source": "Jooble Live API"
                 })
-            return {"jobs": results, "total_count": len(results)}
+            return {"jobs": results, "total_count": len(results), "is_live_jooble": is_live}
 
         # Fallback to database cached jobs matching keyword
         if db:
             try:
+                offset = max(0, (page - 1) * limit)
                 cached = db.query(Job).filter(
                     or_(
                         Job.title.ilike(f"%{keyword}%"),
                         Job.description.ilike(f"%{keyword}%")
                     )
-                ).limit(limit).all()
+                ).offset(offset).limit(limit).all()
                 if not cached:
-                    cached = db.query(Job).order_by(Job.created_at.desc()).limit(limit).all()
+                    cached = db.query(Job).order_by(Job.created_at.desc()).offset(offset).limit(limit).all()
                 if cached:
                     results = []
                     for c in cached:
@@ -366,7 +432,7 @@ class JoobleService:
                             "link": c.source_url or "https://jooble.org",
                             "source": f"Cached Database ({c.source})"
                         })
-                    return {"jobs": results, "total_count": len(results)}
+                    return {"jobs": results, "total_count": len(results), "is_live_jooble": False}
             except Exception as exc:
                 logger.warning(f"[Jooble sync fallback] DB query failed: {exc}")
 
@@ -387,7 +453,7 @@ class JoobleService:
                 "link": item["link"],
                 "source": "Verified Tech Jobs Pool"
             })
-        return {"jobs": results, "total_count": len(results)}
+        return {"jobs": results, "total_count": len(results), "is_live_jooble": False}
 
 
 jooble_service = JoobleService()

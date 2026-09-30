@@ -1,14 +1,23 @@
 import json
 import httpx
+import logging
 from typing import Optional, List, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from backend.app.core.database import get_db
 from backend.app.core.config import settings
+from backend.app.core.security import get_current_student, get_optional_current_student
+from backend.app.models.profile import Student
 from backend.app.models.skill_track import SkillTrack
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/skill-tracks", tags=["Skill Tracks"])
+
+# Bounded in-memory cache for YouTube queries to prevent quota burn and duplicate calls
+_yt_cache: Dict[str, Dict[str, Any]] = {}
+_MAX_YT_CACHE_SIZE = 200
 
 
 class YouTubePlaylistRequest(BaseModel):
@@ -36,146 +45,160 @@ class SaveSkillTrackRequest(BaseModel):
 @router.post("/youtube-playlist")
 async def get_and_store_youtube_playlist(
     payload: YouTubePlaylistRequest,
+    current_student: Optional[Student] = Depends(get_optional_current_student),
     db: Session = Depends(get_db)
 ):
     """
     Queries YouTube Data API v3 for the top 1 playlist for the requested topic/skill,
     stores it in the database in the yt_playlist column of the skill track,
     and returns the playlist info with iframe embed URL.
+    Uses in-memory caching to avoid repeated API requests for identical topics.
     """
     topic = payload.topic.strip()
     if not topic:
         raise HTTPException(status_code=400, detail="Topic cannot be empty")
 
-    api_key = settings.YOUTUBE_API_KEY
-    if not api_key:
-        raise HTTPException(status_code=500, detail="YouTube API Key is not configured")
+    effective_student_id = current_student.id if current_student else payload.student_id
 
-    playlist_data = None
+    # 1. Check in-memory cache
+    cache_key = topic.lower()
+    if cache_key in _yt_cache:
+        playlist_data = _yt_cache[cache_key]
+    else:
+        api_key = settings.YOUTUBE_API_KEY
+        if not api_key:
+            raise HTTPException(status_code=500, detail="YouTube API Key is not configured")
 
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        # 1. Search for best top 1 Playlist
-        query = f"{topic} full course tutorial playlist"
-        url = "https://www.googleapis.com/youtube/v3/search"
-        params = {
-            "part": "snippet",
-            "type": "playlist",
-            "q": query,
-            "maxResults": 1,
-            "key": api_key
-        }
+        playlist_data = None
 
-        try:
-            resp = await client.get(url, params=params)
-            if resp.status_code == 200:
-                data = resp.json()
-                items = data.get("items", [])
-                if items:
-                    item = items[0]
-                    playlist_id = item.get("id", {}).get("playlistId")
-                    snippet = item.get("snippet", {})
-                    if playlist_id:
-                        lectures = []
-                        try:
-                            pl_url = "https://www.googleapis.com/youtube/v3/playlistItems"
-                            pl_params = {
-                                "part": "snippet,contentDetails",
-                                "playlistId": playlist_id,
-                                "maxResults": 25,
-                                "key": api_key
-                            }
-                            pl_resp = await client.get(pl_url, params=pl_params)
-                            if pl_resp.status_code == 200:
-                                pl_data = pl_resp.json()
-                                pl_items = pl_data.get("items", [])
-                                for p_idx, p_item in enumerate(pl_items):
-                                    vid_id = p_item.get("snippet", {}).get("resourceId", {}).get("videoId")
-                                    if vid_id:
-                                        lectures.append({
-                                            "id": p_item.get("id", f"lec-{p_idx}"),
-                                            "video_id": vid_id,
-                                            "title": p_item.get("snippet", {}).get("title", f"Lecture {p_idx+1}"),
-                                            "position": p_item.get("snippet", {}).get("position", p_idx),
-                                            "thumbnail": p_item.get("snippet", {}).get("thumbnails", {}).get("high", {}).get("url") or p_item.get("snippet", {}).get("thumbnails", {}).get("default", {}).get("url"),
-                                            "channel_title": p_item.get("snippet", {}).get("channelTitle", snippet.get("channelTitle", "YouTube")),
-                                            "embed_url": f"https://www.youtube-nocookie.com/embed/{vid_id}?autoplay=1&enablejsapi=1"
-                                        })
-                        except Exception as e:
-                            print(f"Error fetching playlistItems: {e}")
+        async with httpx.AsyncClient(timeout=8.0) as client:
+            query = f"{topic} full course tutorial playlist"
+            url = "https://www.googleapis.com/youtube/v3/search"
+            params = {
+                "part": "snippet",
+                "type": "playlist",
+                "q": query,
+                "maxResults": 1,
+                "key": api_key
+            }
 
-                        playlist_data = {
-                            "topic": topic,
-                            "playlist_id": playlist_id,
-                            "title": snippet.get("title", f"{topic} Course"),
-                            "channel_title": snippet.get("channelTitle", "YouTube"),
-                            "description": snippet.get("description", ""),
-                            "thumbnail": snippet.get("thumbnails", {}).get("high", {}).get("url") or snippet.get("thumbnails", {}).get("default", {}).get("url"),
-                            "embed_url": f"https://www.youtube-nocookie.com/embed/videoseries?list={playlist_id}&autoplay=1&enablejsapi=1",
-                            "is_playlist": True,
-                            "total_videos": len(lectures) if lectures else 1,
-                            "lectures": lectures,
-                            "completed_videos": []
-                        }
-        except Exception as e:
-            print(f"Error querying YouTube playlist API: {e}")
-
-        # 2. Fallback to video search if playlist returned empty
-        if not playlist_data:
             try:
-                video_params = {
-                    "part": "snippet",
-                    "type": "video",
-                    "q": f"{topic} full course tutorial",
-                    "maxResults": 1,
-                    "key": api_key
-                }
-                v_resp = await client.get(url, params=video_params)
-                if v_resp.status_code == 200:
-                    v_data = v_resp.json()
-                    v_items = v_data.get("items", [])
-                    if v_items:
-                        v_item = v_items[0]
-                        video_id = v_item.get("id", {}).get("videoId")
-                        v_snippet = v_item.get("snippet", {})
-                        if video_id:
+                resp = await client.get(url, params=params)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    items = data.get("items", [])
+                    if items:
+                        item = items[0]
+                        playlist_id = item.get("id", {}).get("playlistId")
+                        snippet = item.get("snippet", {})
+                        if playlist_id:
+                            lectures = []
+                            try:
+                                pl_url = "https://www.googleapis.com/youtube/v3/playlistItems"
+                                pl_params = {
+                                    "part": "snippet,contentDetails",
+                                    "playlistId": playlist_id,
+                                    "maxResults": 25,
+                                    "key": api_key
+                                }
+                                pl_resp = await client.get(pl_url, params=pl_params)
+                                if pl_resp.status_code == 200:
+                                    pl_data = pl_resp.json()
+                                    pl_items = pl_data.get("items", [])
+                                    for p_idx, p_item in enumerate(pl_items):
+                                        vid_id = p_item.get("snippet", {}).get("resourceId", {}).get("videoId")
+                                        if vid_id:
+                                            lectures.append({
+                                                "id": p_item.get("id", f"lec-{p_idx}"),
+                                                "video_id": vid_id,
+                                                "title": p_item.get("snippet", {}).get("title", f"Lecture {p_idx+1}"),
+                                                "position": p_item.get("snippet", {}).get("position", p_idx),
+                                                "thumbnail": p_item.get("snippet", {}).get("thumbnails", {}).get("high", {}).get("url") or p_item.get("snippet", {}).get("thumbnails", {}).get("default", {}).get("url"),
+                                                "channel_title": p_item.get("snippet", {}).get("channelTitle", snippet.get("channelTitle", "YouTube")),
+                                                "embed_url": f"https://www.youtube-nocookie.com/embed/{vid_id}?autoplay=1&enablejsapi=1"
+                                            })
+                            except Exception as pl_err:
+                                logger.warning(f"Error fetching playlist items from YouTube: {pl_err}")
+
                             playlist_data = {
                                 "topic": topic,
-                                "video_id": video_id,
-                                "playlist_id": video_id,
-                                "title": v_snippet.get("title", f"{topic} Course Tutorial"),
-                                "channel_title": v_snippet.get("channelTitle", "YouTube"),
-                                "description": v_snippet.get("description", ""),
-                                "thumbnail": v_snippet.get("thumbnails", {}).get("high", {}).get("url") or v_snippet.get("thumbnails", {}).get("default", {}).get("url"),
-                                "embed_url": f"https://www.youtube-nocookie.com/embed/{video_id}?autoplay=1&enablejsapi=1",
-                                "is_playlist": False,
-                                "total_videos": 1,
-                                "lectures": [
-                                    {
-                                        "id": "single-vid",
-                                        "video_id": video_id,
-                                        "title": v_snippet.get("title", f"{topic} Full Lecture"),
-                                        "position": 0,
-                                        "thumbnail": v_snippet.get("thumbnails", {}).get("high", {}).get("url"),
-                                        "channel_title": v_snippet.get("channelTitle", "YouTube"),
-                                        "embed_url": f"https://www.youtube-nocookie.com/embed/{video_id}?autoplay=1&enablejsapi=1"
-                                    }
-                                ],
+                                "playlist_id": playlist_id,
+                                "title": snippet.get("title", f"{topic} Complete Course"),
+                                "channel_title": snippet.get("channelTitle", "YouTube"),
+                                "description": snippet.get("description", ""),
+                                "thumbnail": snippet.get("thumbnails", {}).get("high", {}).get("url") or snippet.get("thumbnails", {}).get("default", {}).get("url"),
+                                "embed_url": f"https://www.youtube-nocookie.com/embed/videoseries?list={playlist_id}&autoplay=1&enablejsapi=1",
+                                "is_playlist": True,
+                                "total_videos": len(lectures),
+                                "lectures": lectures,
                                 "completed_videos": []
                             }
             except Exception as e:
-                print(f"Error querying YouTube video fallback API: {e}")
+                logger.warning(f"Error querying YouTube playlist API: {e}")
 
-    if not playlist_data:
-        raise HTTPException(status_code=404, detail="No YouTube playlist or video found for this topic")
+            # Fallback to single video search if playlist returned empty
+            if not playlist_data:
+                try:
+                    video_params = {
+                        "part": "snippet",
+                        "type": "video",
+                        "q": f"{topic} complete course tutorial",
+                        "maxResults": 1,
+                        "key": api_key
+                    }
+                    v_resp = await client.get(url, params=video_params)
+                    if v_resp.status_code == 200:
+                        v_data = v_resp.json()
+                        v_items = v_data.get("items", [])
+                        if v_items:
+                            v_item = v_items[0]
+                            video_id = v_item.get("id", {}).get("videoId")
+                            v_snippet = v_item.get("snippet", {})
+                            if video_id:
+                                playlist_data = {
+                                    "topic": topic,
+                                    "video_id": video_id,
+                                    "playlist_id": video_id,
+                                    "title": v_snippet.get("title", f"{topic} Course Tutorial"),
+                                    "channel_title": v_snippet.get("channelTitle", "YouTube"),
+                                    "description": v_snippet.get("description", ""),
+                                    "thumbnail": v_snippet.get("thumbnails", {}).get("high", {}).get("url") or v_snippet.get("thumbnails", {}).get("default", {}).get("url"),
+                                    "embed_url": f"https://www.youtube-nocookie.com/embed/{video_id}?autoplay=1&enablejsapi=1",
+                                    "is_playlist": False,
+                                    "total_videos": 1,
+                                    "lectures": [
+                                        {
+                                            "id": "single-vid",
+                                            "video_id": video_id,
+                                            "title": v_snippet.get("title", f"{topic} Full Lecture"),
+                                            "position": 0,
+                                            "thumbnail": v_snippet.get("thumbnails", {}).get("high", {}).get("url"),
+                                            "channel_title": v_snippet.get("channelTitle", "YouTube"),
+                                            "embed_url": f"https://www.youtube-nocookie.com/embed/{video_id}?autoplay=1&enablejsapi=1"
+                                        }
+                                    ],
+                                    "completed_videos": []
+                                }
+                except Exception as e:
+                    logger.warning(f"Error querying YouTube video fallback API: {e}")
 
-    # 3. Store in database in the `yt_playlist` column of the SkillTrack
+        if not playlist_data:
+            raise HTTPException(status_code=404, detail="No YouTube playlist or video found for this topic.")
+
+        # Cache valid response
+        if len(_yt_cache) < _MAX_YT_CACHE_SIZE:
+            _yt_cache[cache_key] = playlist_data
+
+    # Store in database in the `yt_playlist` column of the SkillTrack
     target_track = None
     if payload.skill_track_id:
         target_track = db.query(SkillTrack).filter(SkillTrack.id == payload.skill_track_id).first()
+        if target_track and current_student and target_track.student_id and target_track.student_id != current_student.id:
+            raise HTTPException(status_code=403, detail="Access denied: Cannot modify another student's skill track.")
     elif payload.job_id:
         query = db.query(SkillTrack).filter(SkillTrack.job_id == payload.job_id)
-        if payload.student_id:
-            query = query.filter(SkillTrack.student_id == payload.student_id)
+        if effective_student_id:
+            query = query.filter(SkillTrack.student_id == effective_student_id)
         target_track = query.first()
 
     if target_track:
@@ -198,23 +221,32 @@ async def get_and_store_youtube_playlist(
 
 
 @router.post("/save")
-def save_skill_track(payload: SaveSkillTrackRequest, db: Session = Depends(get_db)):
+def save_skill_track(
+    payload: SaveSkillTrackRequest,
+    current_student: Optional[Student] = Depends(get_optional_current_student),
+    db: Session = Depends(get_db)
+):
     """
-    Saves or updates a skill track in the database.
+    Saves or updates a skill track in the database with IDOR validation.
     """
+    student_id = current_student.id if current_student else payload.student_id
+
     track = None
     if payload.id:
         track = db.query(SkillTrack).filter(SkillTrack.id == payload.id).first()
+        if track and current_student and track.student_id and track.student_id != current_student.id:
+            raise HTTPException(status_code=403, detail="Access denied: Cannot modify another student's skill track.")
+
     if not track and payload.job_id:
-        track = db.query(SkillTrack).filter(
-            SkillTrack.job_id == payload.job_id,
-            SkillTrack.student_id == payload.student_id
-        ).first()
+        query = db.query(SkillTrack).filter(SkillTrack.job_id == payload.job_id)
+        if student_id:
+            query = query.filter(SkillTrack.student_id == student_id)
+        track = query.first()
 
     if not track:
         track = SkillTrack(
             job_id=payload.job_id,
-            student_id=payload.student_id,
+            student_id=student_id,
             job_title=payload.job_title,
             company=payload.company,
             location=payload.location,
@@ -247,13 +279,30 @@ def save_skill_track(payload: SaveSkillTrackRequest, db: Session = Depends(get_d
 
 
 @router.get("")
-def get_skill_tracks(student_id: Optional[str] = None, db: Session = Depends(get_db)):
+def get_skill_tracks(
+    student_id: Optional[str] = None,
+    current_student: Optional[Student] = Depends(get_optional_current_student),
+    db: Session = Depends(get_db)
+):
     """
     Retrieves saved skill tracks with their stored YouTube playlists.
+    Enforces user isolation so private tracks are not leaked across accounts.
     """
+    effective_id = current_student.id if current_student else student_id
+
+    if current_student and student_id and student_id != current_student.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Cannot access skill tracks of another student."
+        )
+
     query = db.query(SkillTrack)
-    if student_id:
-        query = query.filter(SkillTrack.student_id == student_id)
+    if effective_id:
+        query = query.filter(SkillTrack.student_id == effective_id)
+    else:
+        # If completely unauthenticated and no ID, return demo tracks only
+        query = query.filter(SkillTrack.student_id.in_(["demo-student-uuid-001", "demo-student-uuid-b_tech"]))
+
     tracks = query.order_by(SkillTrack.created_at.desc()).all()
 
     result = []
@@ -285,13 +334,25 @@ class ToggleLectureProgressRequest(BaseModel):
 
 
 @router.post("/toggle-lecture")
-def toggle_lecture_progress(payload: ToggleLectureProgressRequest, db: Session = Depends(get_db)):
+def toggle_lecture_progress(
+    payload: ToggleLectureProgressRequest,
+    current_student: Optional[Student] = Depends(get_optional_current_student),
+    db: Session = Depends(get_db)
+):
     """
-    Toggles completion of a video lecture and persists progress in the skill_track database column.
+    Toggles completion of a video lecture and persists progress with IDOR validation.
     """
+    effective_id = current_student.id if current_student else payload.student_id
+
+    if current_student and payload.student_id and payload.student_id != current_student.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Cannot modify learning progress of another student."
+        )
+
     query = db.query(SkillTrack).filter(SkillTrack.job_id == payload.job_id)
-    if payload.student_id:
-        query = query.filter(SkillTrack.student_id == payload.student_id)
+    if effective_id:
+        query = query.filter(SkillTrack.student_id == effective_id)
     track = query.first()
 
     if not track:
@@ -322,4 +383,3 @@ def toggle_lecture_progress(payload: ToggleLectureProgressRequest, db: Session =
         "completed_videos": list(completed),
         "total_completed": len(completed),
     }
-

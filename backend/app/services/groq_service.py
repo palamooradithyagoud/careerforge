@@ -168,13 +168,12 @@ async def generate_job_fit_insight(
         "}"
     )
 
-    models_to_try = [settings.GROQ_MODEL, "groq/compound-mini"]
-
-    for model_name in models_to_try:
+    # 1. Primary: Groq Async Client with bounded timeout
+    if settings.GROQ_API_KEY:
         try:
-            client = groq.Groq(api_key=settings.GROQ_API_KEY)
-            completion = client.chat.completions.create(
-                model=model_name,
+            client = groq.AsyncGroq(api_key=settings.GROQ_API_KEY, timeout=4.0)
+            completion = await client.chat.completions.create(
+                model=settings.GROQ_MODEL or "llama-3.3-70b-versatile",
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": prompt}
@@ -184,35 +183,90 @@ async def generate_job_fit_insight(
                 temperature=0.3
             )
             raw_content = completion.choices[0].message.content
-            parsed = json.loads(raw_content)
-
-            # Validate against Pydantic schema
-            validated = JobAnalysisAIInsight(
-                summary=parsed.get("summary", ""),
-                strengths=parsed.get("strengths", []),
-                priority_gaps=[
-                    PriorityGap(
-                        skill=p.get("skill", "Tech Skill"),
-                        priority=p.get("priority", "medium"),
-                        reason=p.get("reason", "Required engineering skill.")
-                    )
-                    for p in parsed.get("priority_gaps", [])
-                ],
-                learning_plan=[
-                    LearningStep(
-                        skill=s.get("skill", "Skill"),
-                        sequence=int(s.get("sequence", idx + 1)),
-                        focus=s.get("focus", ["Core fundamentals", "Hands-on projects"])
-                    )
-                    for idx, s in enumerate(parsed.get("learning_plan", []))
-                ],
-                project_recommendation=parsed.get("project_recommendation", ""),
-                ai_generated=True
-            )
-            return validated
+            if raw_content:
+                parsed = json.loads(raw_content)
+                return JobAnalysisAIInsight(
+                    summary=parsed.get("summary", ""),
+                    strengths=parsed.get("strengths", []),
+                    priority_gaps=[
+                        PriorityGap(
+                            skill=p.get("skill", "Tech Skill"),
+                            priority=p.get("priority", "medium"),
+                            reason=p.get("reason", "Required engineering skill.")
+                        )
+                        for p in parsed.get("priority_gaps", [])
+                    ],
+                    learning_plan=[
+                        LearningStep(
+                            skill=s.get("skill", "Skill"),
+                            sequence=int(s.get("sequence", idx + 1)),
+                            focus=s.get("focus", ["Core fundamentals", "Hands-on projects"])
+                        )
+                        for idx, s in enumerate(parsed.get("learning_plan", []))
+                    ],
+                    project_recommendation=parsed.get("project_recommendation", ""),
+                    ai_generated=True
+                )
         except Exception as exc:
-            logger.warning(f"[Groq] Call failed with model {model_name}: {exc}")
+            is_rate_limit = "429" in str(exc) or "rate" in str(exc).lower()
+            if is_rate_limit:
+                logger.warning(f"[Groq] Rate limited (429): {exc}. Triggering fast failover.")
+            else:
+                logger.warning(f"[Groq] Call failed or timed out: {exc}")
 
-    # Fallback if both models fail
-    logger.warning("[Groq] All Groq model attempts failed or timed out. Returning deterministic fallback.")
+    # 2. Secondary: Gemini Failover with bounded timeout
+    if settings.GEMINI_API_KEY:
+        try:
+            logger.info("[AI Failover] Attempting Gemini API for job insight...")
+            gemini_url = f"{settings.GEMINI_BASE_URL.rstrip('/')}/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {settings.GEMINI_API_KEY}",
+                "Content-Type": "application/json"
+            }
+            body = {
+                "model": settings.GEMINI_MODEL or "gemini-flash-latest",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}
+                ],
+                "response_format": {"type": "json_object"},
+                "temperature": 0.3,
+                "max_tokens": 1200
+            }
+            import httpx
+            async with httpx.AsyncClient(timeout=4.0) as http_client:
+                resp = await http_client.post(gemini_url, headers=headers, json=body)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    choices = data.get("choices", [])
+                    if choices:
+                        raw_content = choices[0].get("message", {}).get("content", "")
+                        parsed = json.loads(raw_content)
+                        return JobAnalysisAIInsight(
+                            summary=parsed.get("summary", ""),
+                            strengths=parsed.get("strengths", []),
+                            priority_gaps=[
+                                PriorityGap(
+                                    skill=p.get("skill", "Tech Skill"),
+                                    priority=p.get("priority", "medium"),
+                                    reason=p.get("reason", "Required engineering skill.")
+                                )
+                                for p in parsed.get("priority_gaps", [])
+                            ],
+                            learning_plan=[
+                                LearningStep(
+                                    skill=s.get("skill", "Skill"),
+                                    sequence=int(s.get("sequence", idx + 1)),
+                                    focus=s.get("focus", ["Core fundamentals", "Hands-on projects"])
+                                )
+                                for idx, s in enumerate(parsed.get("learning_plan", []))
+                            ],
+                            project_recommendation=parsed.get("project_recommendation", ""),
+                            ai_generated=True
+                        )
+        except Exception as gemini_exc:
+            logger.warning(f"[Gemini Failover] Failed or timed out: {gemini_exc}")
+
+    # 3. Controlled deterministic fallback when all external LLMs fail or are unconfigured
+    logger.info("[AI Failover] All external LLMs unavailable. Returning verified deterministic fallback.")
     return build_fallback_insight(student_profile, job, deterministic_analysis)

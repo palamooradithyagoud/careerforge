@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session, joinedload
 from backend.app.core.database import get_db
 from backend.app.core.cache import cache
+from backend.app.core.security import get_current_student
 from backend.app.models.profile import Scholarship, Student
 from backend.app.schemas.profile import ScholarshipResponse, PersonalizedScholarshipResponse
 from backend.app.services.scholarship_matcher import evaluate_scholarship_eligibility
@@ -112,28 +113,27 @@ def get_scholarship_preview(
 
 
 @router.get("/personalized", response_model=List[PersonalizedScholarshipResponse])
-def get_personalized_scholarships(student_id: str = Query(..., description="ID of the student profile"), db: Session = Depends(get_db)):
+def get_personalized_scholarships(
+    student_id: Optional[str] = Query(None, description="Optional ID of the student profile; defaults to authenticated student"),
+    current_student: Student = Depends(get_current_student),
+    db: Session = Depends(get_db)
+):
     """
-    Evaluates scholarships against the student's authoritative database profile.
+    Evaluates scholarships against the authenticated student's authoritative database profile.
     Strictly filters to opportunities matching the student's education stage
     AND academic year (e.g., 1st Year B.Tech gets ONLY 1st Year B.Tech scholarships).
-    Uses in-memory caching and eager-loading to deliver sub-millisecond evaluation.
+    Uses in-memory caching and eager-loading to deliver sub-millisecond evaluation with full IDOR defense.
     """
-    cached = cache.get_personalized(student_id)
+    if student_id and student_id != current_student.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Cannot access personalized scholarships of another student."
+        )
+
+    student = current_student
+    cached = cache.get_personalized(student.id)
     if cached is not None:
         return cached
-
-    student = (
-        db.query(Student)
-        .options(joinedload(Student.academic_profile))
-        .filter(Student.id == student_id)
-        .first()
-    )
-    if not student:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Student profile with ID '{student_id}' not found."
-        )
 
     all_scholarships = cache.get_scholarships(db)
 

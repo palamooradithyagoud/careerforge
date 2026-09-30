@@ -1,6 +1,7 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session, joinedload, selectinload
+from backend.app.core.security import get_current_student, get_optional_current_student
 from backend.app.services.n8n_service import (
     trigger_student_registration_webhook,
     trigger_scholarship_eligibility_webhook
@@ -142,19 +143,33 @@ def build_profile_response(student: Student, db: Session) -> StudentProfileRespo
 def create_or_update_student_profile(
     payload: StudentProfileCreate,
     background_tasks: BackgroundTasks,
+    current_student: Optional[Student] = Depends(get_optional_current_student),
     db: Session = Depends(get_db)
 ):
     """
     Persists a comprehensive student intelligence profile across relational tables.
-    Validates stage-specific criteria authoritatively.
+    Validates stage-specific criteria authoritatively and prevents IDOR / account takeover.
     """
+    # If authenticated, enforce identity ownership
+    if current_student and current_student.email.strip().lower() != payload.email.strip().lower():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Cannot create or update a profile using another user's email."
+        )
+
     # Check if student with email already exists
-    student = db.query(Student).filter(Student.email == payload.email).first()
+    student = db.query(Student).filter(Student.email == payload.email.strip().lower()).first()
+
+    if student and current_student and student.id != current_student.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Cannot overwrite an existing profile belonging to another user."
+        )
 
     if not student:
         student = Student(
             name=payload.name,
-            email=payload.email,
+            email=payload.email.strip().lower(),
             date_of_birth=payload.date_of_birth,
             location=payload.location,
             education_stage=payload.education_stage,
@@ -278,9 +293,28 @@ def create_or_update_student_profile(
     return resp
 
 
+@router.get("/me", response_model=StudentProfileResponse)
+def get_my_profile(
+    current_student: Student = Depends(get_current_student),
+    db: Session = Depends(get_db)
+):
+    """Retrieves authenticated student's own profile directly from verified JWT."""
+    return get_student_profile(student_id=current_student.id, current_student=current_student, db=db)
+
+
 @router.get("/{student_id}", response_model=StudentProfileResponse)
-def get_student_profile(student_id: str, db: Session = Depends(get_db)):
-    """Retrieves full student profile by ID with caching and eager loading."""
+def get_student_profile(
+    student_id: str,
+    current_student: Student = Depends(get_current_student),
+    db: Session = Depends(get_db)
+):
+    """Retrieves full student profile by ID with strict authorization checking and caching."""
+    if current_student.id != student_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: You are not authorized to view another student's profile."
+        )
+
     cached = cache.get_profile(student_id)
     if cached is not None:
         return cached
@@ -315,9 +349,16 @@ def update_student_profile(
     student_id: str,
     payload: StudentProfileUpdate,
     background_tasks: BackgroundTasks,
+    current_student: Student = Depends(get_current_student),
     db: Session = Depends(get_db)
 ):
-    """Applies partial updates to an existing profile and triggers scholarship evaluation."""
+    """Applies partial updates to an existing profile with strict IDOR verification."""
+    if current_student.id != student_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: You are not authorized to modify another student's profile."
+        )
+
     student = db.query(Student).filter(Student.id == student_id).first()
     if not student:
         raise HTTPException(

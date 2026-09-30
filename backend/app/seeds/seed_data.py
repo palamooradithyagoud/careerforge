@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from backend.app.core.security import hash_password
 from backend.app.models.profile import (
     Scholarship, Student, AcademicProfile, StudentSkill, StudentProject,
     StudentCertification, StudentExperience, StudentInterest, StudentPreference, StudentFinancialContext
@@ -454,7 +455,8 @@ def seed_database(db: Session):
             date_of_birth="2003-05-15",
             location="Bengaluru, India",
             education_stage="b_tech",
-            target_role="Full Stack Developer"
+            target_role="Full Stack Developer",
+            password_hash=hash_password("demo123")
         )
         db.add(btech_student)
         db.flush()
@@ -523,6 +525,8 @@ def seed_database(db: Session):
             education_budget="₹10,000 - ₹25,000",
             certification_budget="₹5,000 - ₹10,000"
         ))
+    elif not btech_student.password_hash:
+        btech_student.password_hash = hash_password("demo123")
 
     # 3. CLASS 10 DEMO STUDENT: Rohan Verma
     class10_email = "demo.class10@skillcatalyst.dev"
@@ -535,7 +539,8 @@ def seed_database(db: Session):
             date_of_birth="2009-04-10",
             location="Hyderabad, Telangana",
             education_stage="class_10",
-            target_role="Science Scholar"
+            target_role="Science Scholar",
+            password_hash=hash_password("demo123")
         )
         db.add(class10_student)
         db.flush()
@@ -561,6 +566,8 @@ def seed_database(db: Session):
             preferred_location="Hyderabad",
             available_learning_time="1–2 hours/day"
         ))
+    elif not class10_student.password_hash:
+        class10_student.password_hash = hash_password("demo123")
 
     # 4. INTERMEDIATE DEMO STUDENT: Priya Nair
     inter_email = "demo.intermediate@skillcatalyst.dev"
@@ -573,7 +580,8 @@ def seed_database(db: Session):
             date_of_birth="2007-06-22",
             location="Secunderabad, Telangana",
             education_stage="intermediate",
-            target_role="Engineering Aspirant"
+            target_role="Engineering Aspirant",
+            password_hash=hash_password("demo123")
         )
         db.add(inter_student)
         db.flush()
@@ -599,5 +607,7 @@ def seed_database(db: Session):
             preferred_location="Hyderabad",
             available_learning_time="3–4 hours/day"
         ))
+    elif not inter_student.password_hash:
+        inter_student.password_hash = hash_password("demo123")
 
     db.commit()

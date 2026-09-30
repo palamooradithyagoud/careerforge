@@ -29,10 +29,19 @@ def apply_migrations():
                 if is_postgres:
                     conn.execute(text(f"ALTER TABLE scholarships ADD COLUMN IF NOT EXISTS {col_name} {col_type};"))
                 else:
-                    # SQLite does not support IF NOT EXISTS in ADD COLUMN
                     conn.execute(text(f"ALTER TABLE scholarships ADD COLUMN {col_name} {col_type};"))
                 conn.commit()
                 logger.info(f"Ensured column 'scholarships.{col_name}' exists.")
             except Exception:
-                # Column already exists
                 pass
+
+        # Ensure password_hash exists on students table
+        try:
+            if is_postgres:
+                conn.execute(text("ALTER TABLE students ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);"))
+            else:
+                conn.execute(text("ALTER TABLE students ADD COLUMN password_hash VARCHAR(255);"))
+            conn.commit()
+            logger.info("Ensured column 'students.password_hash' exists.")
+        except Exception:
+            pass

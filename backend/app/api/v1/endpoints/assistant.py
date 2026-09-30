@@ -6,6 +6,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from backend.app.core.database import get_db
+from backend.app.core.security import get_current_student, get_optional_current_student
 from backend.app.models.assistant import AssistantMessage
 from backend.app.services.assistant_service import (
     ask_assistant,
@@ -60,6 +61,7 @@ class StudentMemoryUpdateRequest(BaseModel):
 @router.post("/chat", response_model=AssistantChatResponse)
 async def chat_with_assistant(
     payload: AssistantChatRequest,
+    current_student: Optional[Student] = Depends(get_optional_current_student),
     db: Session = Depends(get_db)
 ):
     """
@@ -70,10 +72,19 @@ async def chat_with_assistant(
     - Gracefully degrades to deterministic rule engines if external LLM is offline.
     """
     try:
+        # Prevent IDOR: if authenticated, verify student_id matches
+        if current_student and payload.student_id and payload.student_id != current_student.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Access denied: Cannot converse with assistant using another student's ID."
+            )
+
+        auth_id = current_student.id if current_student else None
+
         # 1. Construct server-controlled execution context (IDOR defense)
         context = build_server_agent_context(
             db=db,
-            authenticated_student_id=None,
+            authenticated_student_id=auth_id,
             client_student_id_param=payload.student_id,
             stage=payload.stage
         )
@@ -172,12 +183,19 @@ async def chat_with_assistant(
 @router.get("/history/{student_id}")
 def get_chat_history(
     student_id: str,
+    current_student: Student = Depends(get_current_student),
     db: Session = Depends(get_db)
 ):
     """
     Retrieves private stored conversation turns from memory for the student.
-    Strictly isolated per student_id / userId.
+    Strictly isolated per authenticated student_id.
     """
+    if current_student.id != student_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Cannot view another student's conversation history."
+        )
+
     history = get_conversation_history(db, student_id)
     return {
         "student_id": student_id,
@@ -189,11 +207,18 @@ def get_chat_history(
 @router.delete("/history/{student_id}")
 def clear_chat_history(
     student_id: str,
+    current_student: Student = Depends(get_current_student),
     db: Session = Depends(get_db)
 ):
     """
     Clears private memory conversation history for the student.
     """
+    if current_student.id != student_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Cannot clear another student's conversation history."
+        )
+
     success = clear_conversation_history(db, student_id)
     return {
         "student_id": student_id,
@@ -204,6 +229,7 @@ def clear_chat_history(
 @router.get("/memory/{student_id}")
 def get_personal_memory(
     student_id: str,
+    current_student: Student = Depends(get_current_student),
     db: Session = Depends(get_db)
 ):
     """
@@ -213,8 +239,14 @@ def get_personal_memory(
     - Weak and strong subjects
     - Career interests
     - Study schedule
-    Strictly isolated per student_id / userId.
+    Strictly isolated per authenticated student_id.
     """
+    if current_student.id != student_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Cannot access another student's memory profile."
+        )
+
     mem = get_student_memory(db, student_id)
     return {
         "student_id": student_id,
@@ -226,11 +258,18 @@ def get_personal_memory(
 def update_personal_memory(
     student_id: str,
     payload: StudentMemoryUpdateRequest,
+    current_student: Student = Depends(get_current_student),
     db: Session = Depends(get_db)
 ):
     """
-    Updates personal AI memory attributes for the student.
+    Updates personal AI memory attributes for the student with IDOR protection.
     """
+    if current_student.id != student_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Cannot modify another student's memory profile."
+        )
+
     updates = payload.model_dump(exclude_unset=True)
     updated_mem = update_student_memory(db, student_id, updates)
     return {
@@ -243,11 +282,18 @@ def update_personal_memory(
 @router.delete("/memory/{student_id}")
 def delete_personal_memory(
     student_id: str,
+    current_student: Student = Depends(get_current_student),
     db: Session = Depends(get_db)
 ):
     """
-    Resets personal AI memory for the student.
+    Resets personal AI memory for the student with IDOR protection.
     """
+    if current_student.id != student_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Cannot delete another student's memory profile."
+        )
+
     cleared = clear_student_memory(db, student_id)
     return {
         "student_id": student_id,

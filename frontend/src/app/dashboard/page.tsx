@@ -78,6 +78,9 @@ function DashboardContent() {
       loadData(studentId);
     } else {
       api.auth.demoLogin("b_tech").then((sess) => {
+        if (sess && sess.token) {
+          localStorage.setItem("skillcatalyst_session", JSON.stringify(sess));
+        }
         if (sess.student_id) {
           setStudentId(sess.student_id);
           loadData(sess.student_id);

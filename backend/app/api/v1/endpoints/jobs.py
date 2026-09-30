@@ -9,6 +9,7 @@ from sqlalchemy import or_
 from pydantic import BaseModel
 
 from backend.app.core.database import get_db
+from backend.app.core.security import get_optional_current_student
 from backend.app.models.profile import Student
 from backend.app.models.job import Job
 from backend.app.services.jooble_service import jooble_service, clean_html_snippet, FALLBACK_JOBS
@@ -112,21 +113,29 @@ async def analyze_job_fit(
     job_id: str,
     payload: Optional[AnalyzeJobRequest] = Body(None),
     student_id: Optional[str] = Query(None),
+    current_student: Optional[Student] = Depends(get_optional_current_student),
     db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """
     Deterministic Skill Gap Analysis + Groq AI Reasoning & Learning Roadmap Generation.
-    Groq never decides match validity; the backend computes verified facts first.
+    Enforces authorization check to prevent IDOR attacks across student profiles.
     """
     effective_student_id = (payload.student_id if payload else None) or student_id
 
+    # If authenticated, prevent querying another student's profile
+    if current_student and effective_student_id and effective_student_id != current_student.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied: Cannot analyze job fit using another student's profile."
+        )
+
     # 1. Resolve student profile
-    student: Optional[Student] = None
-    if effective_student_id:
+    student: Optional[Student] = current_student
+    if not student and effective_student_id:
         student = db.query(Student).filter(Student.id == effective_student_id).first()
 
     if not student:
-        # Default to primary demo B.Tech student
+        # Default to primary demo B.Tech student for guest evaluation
         student = db.query(Student).filter(
             or_(Student.id == "demo-student-uuid-001", Student.education_stage == "b_tech")
         ).first()
