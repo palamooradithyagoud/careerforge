@@ -843,14 +843,12 @@ export default function CareerPathwaysModal({
 
   const canGoBack =
     currentStage === "intermediate"
-      ? activeAfterInterSubgroup !== null || isInterExamsExpanded
+      ? activeAfterInterSubgroup !== null
       : activeDegreeOption !== null || isDegreeExamsExpanded;
 
   const handleBack = () => {
     if (currentStage === "intermediate") {
-      if (isInterExamsExpanded) {
-        setIsInterExamsExpanded(false);
-      } else if (activeAfterInterSubgroup) {
+      if (activeAfterInterSubgroup) {
         setActiveAfterInterSubgroup(null);
       }
     } else if (currentStage === "b_tech") {
@@ -1005,24 +1003,7 @@ export default function CareerPathwaysModal({
                       </span>
                     </>
                   )}
-                  {isInterExamsExpanded && (
-                    <>
-                      <span className="text-[#55556A]">/</span>
-                      <span className="font-bold text-amber-400">Entrance Exams</span>
-                    </>
-                  )}
                 </div>
-
-                {isInterExamsExpanded && (
-                  <button
-                    type="button"
-                    onClick={() => setIsInterExamsExpanded(false)}
-                    className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1 font-medium transition-colors cursor-pointer"
-                  >
-                    <RotateCcw className="w-3 h-3" />
-                    <span>Show All 14 Subgroups</span>
-                  </button>
-                )}
 
                 {activeAfterInterSubgroup && (
                   <button
@@ -1036,153 +1017,8 @@ export default function CareerPathwaysModal({
                 )}
               </div>
 
-              {/* ENTRANCE EXAMS SECTION: AFTER INTERMEDIATE / DIPLOMA (Collapsible / Expandible) */}
-              {!activeAfterInterSubgroup && (
-                !isInterExamsExpanded ? (
-                  <motion.div
-                    whileHover={{ scale: 1.005, borderColor: "rgba(251, 191, 36, 0.5)" }}
-                    whileTap={{ scale: 0.995 }}
-                    onClick={() => setIsInterExamsExpanded(true)}
-                    className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#181824] to-[#14141E] border border-[#2B2B3C] cursor-pointer group transition-all duration-200 shadow-md flex items-center justify-between gap-4"
-                  >
-                    <div className="flex items-start gap-3.5">
-                      <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 group-hover:scale-105 transition-transform">
-                        <Award className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="text-base sm:text-lg font-bold text-white group-hover:text-amber-300 transition-colors">
-                            Entrance Exams (After Intermediate / Diploma)
-                          </h4>
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 font-semibold border border-amber-500/30">
-                            11 Key Entrances
-                          </span>
-                        </div>
-                        <p className="text-xs text-[#8E8E9C] mt-1 leading-relaxed">
-                          Major entrance tests across Engineering, Medical, and Architecture/Design (AP/TG EAPCET, JEE Main, JEE Adv, NEET-UG, BITSAT, etc.)
-                        </p>
-                        <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-[#101018] text-amber-300 border border-amber-500/20 font-bold">Engineering / Tech (7)</span>
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-[#101018] text-emerald-300 border border-emerald-500/20 font-bold">Medical (1)</span>
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-[#101018] text-indigo-300 border border-indigo-500/20 font-bold">Architecture / Design (3)</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-[#1F1F2E] group-hover:bg-amber-500 text-white flex items-center justify-center shrink-0 transition-colors">
-                      <ChevronDown className="w-4 h-4" />
-                    </div>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#161624] to-[#12121C] border border-amber-400/40 shadow-xl space-y-4 ring-1 ring-amber-400/30"
-                  >
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-                          <Award className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                            <span>Entrance Exams: After Intermediate / Diploma</span>
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 font-semibold border border-amber-500/30">
-                              11 Key Entrances
-                            </span>
-                          </h4>
-                          <p className="text-[11px] text-[#8E8E9C]">
-                            Major entrance tests across Engineering, Medical, and Architecture/Design:
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        {/* Category filter pills */}
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <button
-                            type="button"
-                            onClick={() => setInterExamCategoryFilter("ALL")}
-                            className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
-                              interExamCategoryFilter === "ALL"
-                                ? "bg-amber-400 text-black font-extrabold shadow-xs"
-                                : "bg-[#181826] text-[#8E8E9C] hover:text-white border border-[#2B2B3C]"
-                            }`}
-                          >
-                            All (11)
-                          </button>
-                          {ENTRANCE_EXAMS_INTERMEDIATE.map((cat) => (
-                            <button
-                              key={cat.category}
-                              type="button"
-                              onClick={() => setInterExamCategoryFilter(cat.category)}
-                              className={`px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer flex items-center gap-1 ${
-                                interExamCategoryFilter === cat.category
-                                  ? "bg-amber-400 text-black font-extrabold shadow-xs"
-                                  : "bg-[#181826] text-[#8E8E9C] hover:text-white border border-[#2B2B3C]"
-                              }`}
-                            >
-                              <span>{cat.icon}</span>
-                              <span>{cat.category.split(" / ")[0]}</span>
-                            </button>
-                          ))}
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => setIsInterExamsExpanded(false)}
-                          className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#1C1C28] hover:bg-[#252536] text-amber-300 border border-amber-400/30 flex items-center gap-1 transition-colors cursor-pointer"
-                        >
-                          <ChevronUp className="w-3.5 h-3.5" />
-                          <span>Collapse</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3.5">
-                      {ENTRANCE_EXAMS_INTERMEDIATE
-                        .filter((cat) => interExamCategoryFilter === "ALL" || interExamCategoryFilter === cat.category)
-                        .map((cat) => (
-                          <div key={cat.category} className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm">{cat.icon}</span>
-                              <span className="text-xs font-bold uppercase tracking-wider" style={{ color: cat.color }}>
-                                {cat.category}
-                              </span>
-                              <span className="text-[10px] text-[#6E6E82]">({cat.exams.length} exams)</span>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                              {cat.exams.map((exam, idx) => (
-                                <div
-                                  key={idx}
-                                  className="p-2.5 rounded-xl bg-[#181826] border border-[#262638] hover:border-[#3E3E56] hover:bg-[#1B1B2A] transition-all flex flex-col justify-between gap-1 group"
-                                  style={{ borderLeftColor: cat.color, borderLeftWidth: "3px" }}
-                                >
-                                  <div className="flex items-center justify-between gap-1.5">
-                                    <span className="font-extrabold text-xs tracking-tight text-white group-hover:text-amber-300 transition-colors">
-                                      {exam.name}
-                                    </span>
-                                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-white/5 text-[#A6A6BC] font-semibold border border-white/10 shrink-0">
-                                      {exam.badge}
-                                    </span>
-                                  </div>
-                                  <p className="text-[11px] text-[#A6A6BC] flex items-center gap-1">
-                                    <span className="text-[#6E6E82] shrink-0">—</span>
-                                    <span className="truncate">{exam.target}</span>
-                                  </p>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                    </div>
-                  </motion.div>
-                )
-              )}
-
-              {/* 14 CAREER SUBGROUPS (Only shown when Entrance Exams is NOT expanded) */}
-              {!isInterExamsExpanded && (
-                <div className="p-4 sm:p-5 rounded-2xl bg-[#161622] border border-[#2B2B3C] space-y-4">
+              {/* 14 CAREER SUBGROUPS */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-[#161622] border border-[#2B2B3C] space-y-4">
                   {/* Header info */}
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div>
@@ -1391,7 +1227,6 @@ export default function CareerPathwaysModal({
                     </AnimatePresence>
                   </div>
                 </div>
-              )}
             </motion.div>
           )}
 
