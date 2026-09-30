@@ -837,7 +837,7 @@ export default function CareerPathwaysModal({
 
   const canGoBack =
     currentStage === "class_10"
-      ? tenthView !== "options" || is10thExamsExpanded || isDiplomaExamsExpanded
+      ? tenthView !== "options" || is10thExamsExpanded
       : currentStage === "intermediate"
       ? activeAfterInterSubgroup !== null || isInterExamsExpanded
       : activeDegreeOption !== null || isDegreeExamsExpanded;
@@ -848,25 +848,13 @@ export default function CareerPathwaysModal({
         setIs10thExamsExpanded(false);
         return;
       }
-      if (tenthView === "intermediate_diploma") {
-        if (isDiplomaExamsExpanded) {
-          setIsDiplomaExamsExpanded(false);
-        } else if (activeStreamDetail) {
-          setActiveStreamDetail(null);
-        } else if (activeDiplomaBranch) {
-          setActiveDiplomaBranch(null);
-        } else if (selected10thOption) {
-          setSelected10thOption(null);
-        } else {
-          setTenthView("options");
-        }
-      } else if (tenthView === "subgroups") {
+      if (tenthView === "subgroups") {
         if (isInterExamsExpanded) {
           setIsInterExamsExpanded(false);
         } else if (activeAfterInterSubgroup) {
           setActiveAfterInterSubgroup(null);
         } else {
-          setTenthView("intermediate_diploma");
+          setTenthView("options");
         }
       } else if (tenthView === "degree") {
         if (isDegreeExamsExpanded) {
@@ -948,7 +936,7 @@ export default function CareerPathwaysModal({
                 </div>
                 <p className="text-xs text-[#8E8E9C] mt-0.5">
                   {currentStage === "class_10"
-                    ? "Post-10th Pathways · Intermediate / Diploma & State Entrance Exams"
+                    ? "Post-10th Pathways · State Entrance Exams & Career Gateways"
                     : currentStage === "intermediate"
                     ? "Degree Pathways · Career Trajectories after Intermediate / Diploma"
                     : "Post-Degree Specializations · Higher Studies, Placements, Civil & Research"}
@@ -1026,7 +1014,7 @@ export default function CareerPathwaysModal({
         <div className="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1 custom-scrollbar">
 
           {/* ========================================================================= */}
-          {/* 10th STUDENT VIEW: POST-10th OPTIONS (Intermediate/Diploma & Degree)      */}
+          {/* 10th STUDENT VIEW: POST-10th PATHWAYS & ENTRANCE EXAMINATIONS             */}
           {/* ========================================================================= */}
           {currentStage === "class_10" && tenthView === "options" && (
             <motion.div
@@ -1038,900 +1026,116 @@ export default function CareerPathwaysModal({
               <div className="flex items-center justify-between pb-1">
                 <div className="flex items-center gap-2 text-xs">
                   <span className="font-semibold text-[#8E8E9C] uppercase tracking-wider">
-                    Post-10th Pathway Choices
+                    Post-10th Pathways & Entrance Exams
                   </span>
-                  {is10thExamsExpanded && (
-                    <>
-                      <span className="text-[#55556A]">/</span>
-                      <span className="font-bold text-pink-400">Entrance Exams</span>
-                    </>
-                  )}
                 </div>
-                {is10thExamsExpanded ? (
-                  <button
-                    type="button"
-                    onClick={() => setIs10thExamsExpanded(false)}
-                    className="text-xs text-pink-400 hover:text-pink-300 flex items-center gap-1 font-medium transition-colors cursor-pointer"
-                  >
-                    <RotateCcw className="w-3 h-3" />
-                    <span>Show All Choices</span>
-                  </button>
-                ) : (
-                  <span className="text-xs text-pink-400 font-medium">
-                    2 Pathways
-                  </span>
-                )}
+                <span className="text-xs text-pink-400 font-semibold px-2.5 py-0.5 rounded-full bg-pink-500/10 border border-pink-500/20">
+                  State Board Entrances
+                </span>
               </div>
 
-              <div className="space-y-3">
-                {/* 1. Intermediate / Diploma Card (Only shown when entrance exams not expanded) */}
-                {!is10thExamsExpanded && (
-                  <motion.div
-                    whileHover={{ scale: 1.01, borderColor: "rgba(244, 114, 182, 0.5)" }}
-                    whileTap={{ scale: 0.99 }}
-                    onClick={() => {
-                      setTenthView("intermediate_diploma");
-                      setSelected10thOption(null);
-                      setActiveStreamDetail(null);
-                      setActiveDiplomaBranch(null);
-                    }}
-                    className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#181824] to-[#14141E] border border-[#2B2B3C] cursor-pointer group transition-all duration-200 shadow-md flex items-center justify-between gap-4"
-                  >
-                    <div className="flex items-start gap-3.5">
-                      <div className="w-12 h-12 rounded-xl bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-pink-400 shrink-0 group-hover:scale-105 transition-transform">
-                        <BookOpen className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-pink-300 transition-colors">
-                            Intermediate / Diploma
-                          </h3>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-pink-500/15 border border-pink-500/30 text-pink-300">
-                            Immediate Next Step
+              {/* Entrance Exams Section: After 10th */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#161624] to-[#12121C] border border-pink-500/40 shadow-xl space-y-4 ring-1 ring-pink-500/30">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-pink-500/15 border border-pink-500/30 flex items-center justify-center text-pink-400 shrink-0">
+                      <Award className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
+                        <span>Entrance Exams (After 10th)</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/15 text-pink-300 font-semibold border border-pink-500/30">
+                          2 Examinations
+                        </span>
+                      </h4>
+                      <p className="text-xs text-[#8E8E9C] mt-0.5">
+                        State-level entrance examinations and direct admission pathways:
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  {ENTRANCE_EXAMS_10TH.map((exam, idx) => (
+                    <div
+                      key={idx}
+                      className="p-3.5 rounded-xl bg-[#181826] border border-[#2B2B3C] hover:border-pink-500/40 hover:bg-[#1B1B2A] transition-all flex items-center justify-between gap-3 group shadow-xs"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-extrabold text-sm text-pink-300 tracking-tight group-hover:text-pink-200">
+                            {exam.name}
+                          </span>
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-pink-500/10 text-pink-400 border border-pink-500/20 font-bold">
+                            {exam.badge}
                           </span>
                         </div>
-                        <p className="text-xs text-[#8E8E9C] mt-1 leading-relaxed">
-                          Choose between <strong>Intermediate (+2 Junior College: MPC, BiPC, MEC, CEC)</strong> or <strong>Polytechnic (3-Year Technical Diploma)</strong>.
+                        <p className="text-xs text-[#CBCBD8] mt-1 flex items-center gap-1.5">
+                          <span className="text-[#6E6E82]">—</span>
+                          <span className="font-medium text-white/90">{exam.target}</span>
                         </p>
-                        <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#101018] text-pink-300 border border-pink-500/20">MPC</span>
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#101018] text-emerald-300 border border-emerald-500/20">BiPC</span>
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#101018] text-amber-300 border border-amber-500/20">MEC</span>
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#101018] text-pink-300 border border-pink-500/20">CEC</span>
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#101018] text-indigo-300 border border-indigo-500/20">Polytechnic Diploma</span>
-                        </div>
+                      </div>
+                      <div className="w-7 h-7 rounded-full bg-pink-500/10 flex items-center justify-center text-pink-400 shrink-0 group-hover:scale-110 transition-transform">
+                        <ArrowUpRight className="w-3.5 h-3.5" />
                       </div>
                     </div>
-                    <div className="w-8 h-8 rounded-full bg-[#1F1F2E] group-hover:bg-pink-500 text-white flex items-center justify-center shrink-0 transition-colors">
+                  ))}
+                </div>
+              </div>
+
+              {/* Symmetric Higher Educational Pathways Navigation */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#181824] to-[#14141E] border border-[#2B2B3C] space-y-3.5 shadow-md">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                      <span>Explore Higher Educational Pathways</span>
+                    </h4>
+                    <p className="text-xs text-[#8E8E9C] mt-0.5">
+                      Navigate to subsequent career tracks and degree specializations:
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => handleResetAll("intermediate")}
+                    className="p-3.5 rounded-xl bg-[#181826] border border-amber-400/30 hover:border-amber-400/60 hover:bg-[#1E1E2C] transition-all flex items-center justify-between gap-3 text-left cursor-pointer group shadow-xs"
+                  >
+                    <div>
+                      <span className="font-bold text-sm text-amber-300 group-hover:text-amber-200 block">
+                        Inter / Diploma Pathways
+                      </span>
+                      <span className="text-[11px] text-[#8E8E9C] mt-0.5 block">
+                        14 career subgroups & 11 major entrance exams
+                      </span>
+                    </div>
+                    <div className="w-7 h-7 rounded-full bg-amber-400/10 text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                       <ArrowUpRight className="w-4 h-4" />
                     </div>
-                  </motion.div>
-                )}
+                  </button>
 
-                {/* 2. ENTRANCE EXAMS SECTION: AFTER 10TH (Collapsible / Expandible) */}
-                {!is10thExamsExpanded ? (
-                  <motion.div
-                    whileHover={{ scale: 1.01, borderColor: "rgba(244, 114, 182, 0.5)" }}
-                    whileTap={{ scale: 0.99 }}
-                    onClick={() => setIs10thExamsExpanded(true)}
-                    className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#181824] to-[#14141E] border border-[#2B2B3C] cursor-pointer group transition-all duration-200 shadow-md flex items-center justify-between gap-4"
-                  >
-                    <div className="flex items-start gap-3.5">
-                      <div className="w-12 h-12 rounded-xl bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-pink-400 shrink-0 group-hover:scale-105 transition-transform">
-                        <Award className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-base sm:text-lg font-bold text-white group-hover:text-pink-300 transition-colors">
-                            Entrance Exams (After 10th)
-                          </h3>
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-pink-500/15 border border-pink-500/30 text-pink-300">
-                            Diploma / Polytechnic · 2 Entrances
-                          </span>
-                        </div>
-                        <p className="text-xs text-[#8E8E9C] mt-1 leading-relaxed">
-                          State-level entrance examinations for direct admission into 3-Year Technical Polytechnic Diplomas.
-                        </p>
-                        <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#101018] text-pink-300 border border-pink-500/20">AP POLYCET</span>
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#101018] text-pink-300 border border-pink-500/20">TG POLYCET</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-[#1F1F2E] group-hover:bg-pink-500 text-white flex items-center justify-center shrink-0 transition-colors">
-                      <ChevronDown className="w-4 h-4" />
-                    </div>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#161624] to-[#12121C] border border-pink-500/40 shadow-xl space-y-3.5 ring-1 ring-pink-500/30"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-pink-400">
-                          <Award className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                            <span>Entrance Exams: After 10th</span>
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/15 text-pink-300 font-semibold border border-pink-500/30">
-                              Diploma / Polytechnic
-                            </span>
-                          </h4>
-                          <p className="text-[11px] text-[#8E8E9C]">
-                            State-level entrance examinations for direct admission into 3-Year Technical Polytechnic Diplomas:
-                          </p>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => setIs10thExamsExpanded(false)}
-                        className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#1C1C28] hover:bg-[#252536] text-pink-300 border border-pink-500/30 flex items-center gap-1 transition-colors cursor-pointer"
-                      >
-                        <ChevronUp className="w-3.5 h-3.5" />
-                        <span>Collapse</span>
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-                      {ENTRANCE_EXAMS_10TH.map((exam, idx) => (
-                        <div
-                          key={idx}
-                          className="p-3.5 rounded-xl bg-[#181826] border border-[#2B2B3C] hover:border-pink-500/40 hover:bg-[#1B1B2A] transition-all flex items-center justify-between gap-3 group"
-                        >
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="font-extrabold text-sm text-pink-300 tracking-tight group-hover:text-pink-200">
-                                {exam.name}
-                              </span>
-                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-pink-500/10 text-pink-400 border border-pink-500/20 font-bold">
-                                {exam.badge}
-                              </span>
-                            </div>
-                            <p className="text-xs text-[#CBCBD8] mt-1 flex items-center gap-1.5">
-                              <span className="text-[#6E6E82]">—</span>
-                              <span className="font-medium text-white/90">{exam.target}</span>
-                            </p>
-                          </div>
-                          <div className="w-6 h-6 rounded-full bg-pink-500/10 flex items-center justify-center text-pink-400 shrink-0 group-hover:scale-110 transition-transform">
-                            <ArrowUpRight className="w-3.5 h-3.5" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </div>
-            </motion.div>
-          )}
-
-          {/* ========================================================================= */}
-          {/* 10th STUDENT VIEW: INTERMEDIATE & DIPLOMA EXPLORER                        */}
-          {/* Shows options: Intermediate              Diploma                          */}
-          {/* When Intermediate is clicked, Diploma disappears and dropdown opens!     */}
-          {/* ========================================================================= */}
-          {currentStage === "class_10" && tenthView === "intermediate_diploma" && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="space-y-5"
-            >
-              {/* Breadcrumb path */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs">
                   <button
                     type="button"
-                    onClick={() => setTenthView("options")}
-                    className="text-[#8E8E9C] hover:text-white transition-colors cursor-pointer"
+                    onClick={() => handleResetAll("b_tech")}
+                    className="p-3.5 rounded-xl bg-[#181826] border border-blue-400/30 hover:border-blue-400/60 hover:bg-[#1E1E2C] transition-all flex items-center justify-between gap-3 text-left cursor-pointer group shadow-xs"
                   >
-                    Post-10th Options
-                  </button>
-                  <span className="text-[#55556A]">/</span>
-                  <span className="font-bold text-pink-400">Intermediate & Diploma</span>
-                  {selected10thOption && (
-                    <>
-                      <span className="text-[#55556A]">/</span>
-                      <span className="font-semibold text-white capitalize">{selected10thOption}</span>
-                    </>
-                  )}
-                  {activeStreamDetail && (
-                    <>
-                      <span className="text-[#55556A]">/</span>
-                      <span className="font-bold text-amber-400">{activeStreamDetail}</span>
-                    </>
-                  )}
-                  {activeDiplomaBranch && (
-                    <>
-                      <span className="text-[#55556A]">/</span>
-                      <span className="font-bold text-emerald-400">
-                        {DIPLOMA_BRANCHES.find(b => b.id === activeDiplomaBranch)?.name || "Branch"}
+                    <div>
+                      <span className="font-bold text-sm text-blue-300 group-hover:text-blue-200 block">
+                        Undergraduate Pathways
                       </span>
-                    </>
-                  )}
-                </div>
-
-                {selected10thOption && (
-                  <button
-                    type="button"
-                    onClick={handleBackTo10thOptions}
-                    className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1 font-medium transition-colors cursor-pointer"
-                  >
-                    <RotateCcw className="w-3 h-3" />
-                    <span>Show Both Options</span>
+                      <span className="text-[11px] text-[#8E8E9C] mt-0.5 block">
+                        Degree tracks, placements, GATE & civil services
+                      </span>
+                    </div>
+                    <div className="w-7 h-7 rounded-full bg-blue-400/10 text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                      <ArrowUpRight className="w-4 h-4" />
+                    </div>
                   </button>
-                )}
-              </div>
-
-              {/* Title & prompt */}
-              <div>
-                <h3 className="text-base sm:text-lg font-bold text-white">
-                  {selected10thOption === "intermediate"
-                    ? activeStreamDetail
-                      ? `${activeStreamDetail} Stream Roadmap`
-                      : "Intermediate (+2) Stream Options"
-                    : selected10thOption === "diploma"
-                    ? activeDiplomaBranch
-                      ? "Polytechnic Branch Details"
-                      : "Polytechnic Diploma Branches"
-                    : "Select Pathway After 10th"}
-                </h3>
-                <p className="text-xs text-[#8E8E9C] mt-0.5">
-                  {selected10thOption === "intermediate"
-                    ? activeStreamDetail
-                      ? `Viewing ${activeStreamDetail} details. Click option again or 'Show All Streams' to view all options.`
-                      : "Click on any stream (MPC, BiPC, MEC, CEC) to inspect curriculum and collapse others."
-                    : selected10thOption === "diploma"
-                    ? activeDiplomaBranch
-                      ? "Viewing polytechnic branch details and lateral entry pathways."
-                      : "Choose a technical diploma specialization or view lateral entry."
-                    : "Choose whether you wish to pursue academic Junior College or 3-Year Polytechnic."}
-                </p>
-              </div>
-
-              {/* DUAL OPTIONS CONTAINER: Intermediate | Diploma */}
-              <div className="w-full">
-                <div
-                  className={`grid transition-all duration-300 ${
-                    selected10thOption === "intermediate" || selected10thOption === "diploma"
-                      ? "grid-cols-1"
-                      : "grid-cols-1 sm:grid-cols-2 gap-4"
-                  }`}
-                >
-                  {/* OPTION 1: INTERMEDIATE */}
-                  <AnimatePresence>
-                    {(selected10thOption === null || selected10thOption === "intermediate") && (
-                      <motion.div
-                        layout
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.85, width: 0, padding: 0 }}
-                        transition={{ duration: 0.25 }}
-                        className={`rounded-2xl border transition-all ${
-                          selected10thOption === "intermediate"
-                            ? "border-pink-500/50 bg-[#161624] shadow-[0_0_25px_rgba(244,114,182,0.15)]"
-                            : "border-[#2B2B3C] bg-[#161622] hover:border-pink-500/40 cursor-pointer shadow-md hover:scale-[1.02]"
-                        }`}
-                      >
-                        {selected10thOption === "intermediate" ? (
-                          /* EXPANDED HEADER: Full width with clean horizontal alignment */
-                          <div
-                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                            className="p-4 sm:p-5 cursor-pointer flex items-center justify-between gap-4"
-                          >
-                            <div className="flex items-center gap-3.5 min-w-0">
-                              <div className="w-10 h-10 rounded-xl bg-pink-500/15 border border-pink-500/30 flex items-center justify-center text-pink-400 shrink-0">
-                                <BookOpen className="w-5 h-5" />
-                              </div>
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <h4 className="font-extrabold text-base sm:text-lg text-white">
-                                    Intermediate
-                                  </h4>
-                                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-pink-500/20 text-pink-300 border border-pink-500/30 whitespace-nowrap">
-                                    +2 (2 Years)
-                                  </span>
-                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                                    Active
-                                  </span>
-                                </div>
-                                <p className="text-xs text-[#8E8E9C] mt-0.5 truncate">
-                                  Higher Secondary Certificate / Junior College
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2 shrink-0">
-                              <div className="w-8 h-8 rounded-full bg-pink-500/20 text-pink-300 flex items-center justify-center border border-pink-500/40 hover:bg-pink-500/30 transition-colors">
-                                {isDropdownOpen ? (
-                                  <ChevronUp className="w-4 h-4" />
-                                ) : (
-                                  <ChevronDown className="w-4 h-4" />
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          /* SIDE-BY-SIDE CARD: Properly aligned top-badge and bottom Select button */
-                          <div
-                            onClick={() => {
-                              setSelected10thOption("intermediate");
-                              setIsDropdownOpen(true);
-                              setActiveStreamDetail(null);
-                            }}
-                            className="p-4 sm:p-5 cursor-pointer flex flex-col justify-between h-full group"
-                          >
-                            {/* Top row: Icon + +2 (2 Years) Badge */}
-                            <div className="flex items-center justify-between gap-2 mb-2.5">
-                              <div className="w-10 h-10 rounded-xl bg-pink-500/15 border border-pink-500/30 flex items-center justify-center text-pink-400 shrink-0 group-hover:scale-105 transition-transform">
-                                <BookOpen className="w-5 h-5" />
-                              </div>
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-pink-500/20 text-pink-300 border border-pink-500/30 whitespace-nowrap shadow-xs">
-                                +2 (2 Years)
-                              </span>
-                            </div>
-
-                            {/* Middle: Title & Description */}
-                            <div className="my-1">
-                              <h4 className="font-extrabold text-base sm:text-lg text-white group-hover:text-pink-300 transition-colors">
-                                Intermediate
-                              </h4>
-                              <p className="text-xs text-[#8E8E9C] mt-0.5 leading-relaxed">
-                                Higher Secondary / Junior College
-                              </p>
-                            </div>
-
-                            {/* Bottom row: Streams hint & properly aligned Select button */}
-                            <div className="mt-3 pt-3 border-t border-[#262638] flex items-center justify-between gap-2">
-                              <span className="text-[11px] font-mono text-[#7E7E94]">
-                                MPC, BiPC, MEC, CEC
-                              </span>
-                              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-pink-500/25 group-hover:bg-pink-500/40 border border-pink-500/40 group-hover:border-pink-400 px-3.5 py-1.5 rounded-full transition-all shadow-sm">
-                                <span>Select</span>
-                                <ArrowUpRight className="w-3.5 h-3.5" />
-                              </span>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* =========================================================== */}
-                        {/* DROPDOWN FOR INTERMEDIATE: MPC, BiPC, MEC, CEC              */}
-                        {/* WHEN ONE IS CLICKED, ALL OTHER OPTIONS COLLAPSE!            */}
-                        {/* =========================================================== */}
-                        <AnimatePresence>
-                          {selected10thOption === "intermediate" && isDropdownOpen && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: "auto" }}
-                              exit={{ opacity: 0, height: 0 }}
-                              transition={{ duration: 0.3 }}
-                              className="border-t border-[#242434] p-4 sm:p-5 bg-[#12121C] rounded-b-2xl space-y-3.5"
-                            >
-                              <div className="flex items-center justify-between pb-1">
-                                <span className="text-[11px] font-bold uppercase tracking-wider text-[#8E8E9C]">
-                                  {activeStreamDetail
-                                    ? `Selected Stream: ${activeStreamDetail}`
-                                    : "Select Intermediate Stream:"}
-                                </span>
-
-                                {activeStreamDetail ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => setActiveStreamDetail(null)}
-                                    className="text-[11px] text-amber-400 hover:text-amber-300 flex items-center gap-1 font-semibold transition-colors cursor-pointer"
-                                  >
-                                    <RotateCcw className="w-3 h-3" />
-                                    <span>Show All Streams (MPC, BiPC, MEC, CEC)</span>
-                                  </button>
-                                ) : (
-                                  <span className="text-[11px] text-emerald-400 font-mono">
-                                    4 Core Streams
-                                  </span>
-                                )}
-                              </div>
-
-                              {/* Streams Grid: Filters to ONLY the clicked option when active! */}
-                              <div
-                                className={`grid transition-all duration-300 ${
-                                  activeStreamDetail ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2 gap-3"
-                                }`}
-                              >
-                                <AnimatePresence>
-                                  {(["MPC", "BiPC", "MEC", "CEC"] as const)
-                                    .filter((streamKey) => !activeStreamDetail || activeStreamDetail === streamKey)
-                                    .map((streamKey) => {
-                                      const stream = INTERMEDIATE_STREAMS[streamKey];
-                                      const isSelected = activeStreamDetail === streamKey;
-
-                                      return (
-                                        <motion.div
-                                          key={streamKey}
-                                          layout
-                                          initial={{ opacity: 0, scale: 0.95 }}
-                                          animate={{ opacity: 1, scale: 1 }}
-                                          exit={{ opacity: 0, scale: 0.85, height: 0, margin: 0, padding: 0 }}
-                                          transition={{ duration: 0.25 }}
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            // Toggle: click opens & collapses others; click again re-expands all
-                                            setActiveStreamDetail(isSelected ? null : streamKey);
-                                          }}
-                                          className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
-                                            isSelected
-                                              ? "border-amber-400 bg-[#1A1A2A] shadow-lg ring-1 ring-amber-400/50"
-                                              : "border-[#2A2A3C] bg-[#161622] hover:border-[#3E3E56] hover:bg-[#1A1A28] shadow-sm hover:scale-[1.01]"
-                                          }`}
-                                          style={{
-                                            borderLeftColor: stream.color,
-                                            borderLeftWidth: "4px"
-                                          }}
-                                        >
-                                          <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                              <span
-                                                className="font-extrabold text-base tracking-tight"
-                                                style={{ color: stream.color }}
-                                              >
-                                                {stream.code}
-                                              </span>
-                                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/10 text-white">
-                                                {stream.badge}
-                                              </span>
-                                            </div>
-                                            <div className="flex items-center gap-1.5">
-                                              {isSelected && (
-                                                <span className="text-[10px] font-bold text-amber-300 bg-amber-400/15 px-2 py-0.5 rounded-full">
-                                                  Active Stream
-                                                </span>
-                                              )}
-                                              <ChevronDown
-                                                className={`w-4 h-4 text-[#8E8E9C] transition-transform duration-200 ${
-                                                  isSelected ? "rotate-180 text-amber-400" : ""
-                                                }`}
-                                              />
-                                            </div>
-                                          </div>
-                                          <p className="text-xs font-medium text-[#E2E2EC] mt-1">
-                                            {stream.name}
-                                          </p>
-                                          <p className="text-[11px] text-[#8E8E9C] mt-1">
-                                            {stream.tagline}
-                                          </p>
-                                        </motion.div>
-                                      );
-                                    })}
-                                </AnimatePresence>
-                              </div>
-
-                              {/* ACTIVE STREAM EXPANDED DETAIL VIEW */}
-                              <AnimatePresence>
-                                {activeStreamDetail && (
-                                  <motion.div
-                                    layout
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, y: 10 }}
-                                    transition={{ duration: 0.25 }}
-                                    className="p-4 rounded-xl border bg-[#181826] space-y-3.5 shadow-lg"
-                                    style={{
-                                      borderColor: INTERMEDIATE_STREAMS[activeStreamDetail].borderColor,
-                                      backgroundColor: INTERMEDIATE_STREAMS[activeStreamDetail].bgLight
-                                    }}
-                                  >
-                                    <div className="flex items-center justify-between">
-                                      <div className="flex items-center gap-2">
-                                        <Sparkles className="w-4 h-4" style={{ color: INTERMEDIATE_STREAMS[activeStreamDetail].color }} />
-                                        <h5 className="font-bold text-sm text-white">
-                                          {INTERMEDIATE_STREAMS[activeStreamDetail].fullTitle}
-                                        </h5>
-                                      </div>
-                                      <button
-                                        type="button"
-                                        onClick={() => setActiveStreamDetail(null)}
-                                        className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-black/40 text-amber-300 hover:text-white border border-white/10 transition-colors cursor-pointer"
-                                      >
-                                        Change Stream
-                                      </button>
-                                    </div>
-
-                                    <p className="text-xs text-[#CBCBD8] leading-relaxed">
-                                      {INTERMEDIATE_STREAMS[activeStreamDetail].tagline}
-                                    </p>
-
-                                    {/* Subjects */}
-                                    <div>
-                                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#8E8E9C] block mb-1.5">
-                                        Core Subjects Covered:
-                                      </span>
-                                      <div className="flex flex-wrap gap-1.5">
-                                        {INTERMEDIATE_STREAMS[activeStreamDetail].subjects.map((sub, idx) => (
-                                          <span
-                                            key={idx}
-                                            className="px-2 py-0.5 rounded-md bg-[#12121A] border border-[#2B2B3C] text-[11px] text-[#E2E2EC]"
-                                          >
-                                            {sub}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    </div>
-
-                                    {/* Top Career Subgroups matching this stream */}
-                                    <div className="pt-1">
-                                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 block mb-1.5">
-                                        🚀 Matching Career Subgroups After {activeStreamDetail}:
-                                      </span>
-                                      <div className="flex flex-wrap gap-1.5">
-                                        {INTERMEDIATE_STREAMS[activeStreamDetail].matchingSubgroups.map((sg, idx) => (
-                                          <button
-                                            key={idx}
-                                            type="button"
-                                            onClick={() => {
-                                              setTenthView("subgroups");
-                                              const match = AFTER_INTERMEDIATE_SUBGROUPS.find(item => item.name === sg);
-                                              if (match) setActiveAfterInterSubgroup(match.id);
-                                            }}
-                                            className="px-2.5 py-1 rounded-lg bg-[#141420] hover:bg-[#1E1E2E] border border-amber-400/30 text-xs font-semibold text-white flex items-center gap-1.5 transition-colors cursor-pointer"
-                                          >
-                                            <span>{sg}</span>
-                                            <ArrowUpRight className="w-3 h-3 text-amber-300" />
-                                          </button>
-                                        ))}
-                                      </div>
-                                    </div>
-
-                                    {/* Career Pathways & Entrance Exams */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                                      <div className="p-3 rounded-lg bg-[#12121A]/70 border border-[#262638]">
-                                        <span className="text-[10px] font-bold text-amber-300 uppercase tracking-wider block mb-1">
-                                          🎯 Top Career Trajectories
-                                        </span>
-                                        <ul className="text-[11px] text-[#A6A6BC] space-y-1">
-                                          {INTERMEDIATE_STREAMS[activeStreamDetail].careers.slice(0, 4).map((c, i) => (
-                                            <li key={i} className="flex items-center gap-1.5">
-                                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-                                              <span className="truncate">{c}</span>
-                                            </li>
-                                          ))}
-                                        </ul>
-                                      </div>
-
-                                      <div className="p-3 rounded-lg bg-[#12121A]/70 border border-[#262638]">
-                                        <span className="text-[10px] font-bold text-cyan-300 uppercase tracking-wider block mb-1">
-                                          📝 Major Entrance Exams
-                                        </span>
-                                        <ul className="text-[11px] text-[#A6A6BC] space-y-1">
-                                          {INTERMEDIATE_STREAMS[activeStreamDetail].exams.map((exam, i) => (
-                                            <li key={i} className="flex items-center gap-1.5">
-                                              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" />
-                                              <span className="truncate">{exam}</span>
-                                            </li>
-                                          ))}
-                                        </ul>
-                                      </div>
-                                    </div>
-
-                                    {/* Action link directly to 14 Subgroups */}
-                                    <div className="pt-2 flex justify-end">
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          setTenthView("subgroups");
-                                          setSubgroupStreamFilter(activeStreamDetail || "ALL");
-                                        }}
-                                        className="text-xs text-pink-400 hover:text-pink-300 font-bold flex items-center gap-1 transition-colors cursor-pointer"
-                                      >
-                                        <span>View all 14 Career Subgroups after Intermediate</span>
-                                        <ArrowUpRight className="w-3.5 h-3.5" />
-                                      </button>
-                                    </div>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-
-                              {/* Quick jump to all 14 subgroups button */}
-                              {!activeStreamDetail && (
-                                <div className="pt-2 text-center">
-                                  <button
-                                    type="button"
-                                    onClick={() => setTenthView("subgroups")}
-                                    className="text-xs text-amber-400 hover:text-amber-300 font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
-                                  >
-                                    <span>Looking for pathways after +2? Explore 14 Career Subgroups</span>
-                                    <ArrowUpRight className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              )}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* OPTION 2: DIPLOMA */}
-                  <AnimatePresence>
-                    {(selected10thOption === null || selected10thOption === "diploma") && (
-                      <motion.div
-                        layout
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.85, width: 0, padding: 0 }}
-                        transition={{ duration: 0.25 }}
-                        className={`rounded-2xl border transition-all ${
-                          selected10thOption === "diploma"
-                            ? "border-emerald-500/50 bg-[#161624] shadow-[0_0_25px_rgba(52,211,153,0.15)]"
-                            : "border-[#2B2B3C] bg-[#161622] hover:border-emerald-500/40 cursor-pointer shadow-md hover:scale-[1.02]"
-                        }`}
-                      >
-                        {selected10thOption === "diploma" ? (
-                          /* EXPANDED DIPLOMA HEADER */
-                          <div
-                            onClick={() => setSelected10thOption(null)}
-                            className="p-4 sm:p-5 cursor-pointer flex items-center justify-between gap-4"
-                          >
-                            <div className="flex items-center gap-3.5 min-w-0">
-                              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
-                                <Layers className="w-5 h-5" />
-                              </div>
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <h4 className="font-extrabold text-base sm:text-lg text-white">
-                                    Diploma
-                                  </h4>
-                                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 whitespace-nowrap">
-                                    3 Years
-                                  </span>
-                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                                    Active
-                                  </span>
-                                </div>
-                                <p className="text-xs text-[#8E8E9C] mt-0.5 truncate">
-                                  Polytechnic Technical Diploma & Skill Programs
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2 shrink-0">
-                              <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-300 flex items-center justify-center border border-emerald-500/40">
-                                <CheckCircle2 className="w-4 h-4" />
-                              </div>
-                            </div>
-                          </div>
-                        ) : (
-                          /* SIDE-BY-SIDE DIPLOMA CARD */
-                          <div
-                            onClick={() => {
-                              setSelected10thOption("diploma");
-                              setActiveDiplomaBranch(null);
-                            }}
-                            className="p-4 sm:p-5 cursor-pointer flex flex-col justify-between h-full group"
-                          >
-                            {/* Top row: Icon + 3 Years Badge */}
-                            <div className="flex items-center justify-between gap-2 mb-2.5">
-                              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 group-hover:scale-105 transition-transform">
-                                <Layers className="w-5 h-5" />
-                              </div>
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 whitespace-nowrap shadow-xs">
-                                3 Years
-                              </span>
-                            </div>
-
-                            {/* Middle: Title & Description */}
-                            <div className="my-1">
-                              <h4 className="font-extrabold text-base sm:text-lg text-white group-hover:text-emerald-300 transition-colors">
-                                Diploma
-                              </h4>
-                              <p className="text-xs text-[#8E8E9C] mt-0.5 leading-relaxed">
-                                Polytechnic Technical Diploma
-                              </p>
-                            </div>
-
-                            {/* Bottom row: Branch hint & properly aligned Select button */}
-                            <div className="mt-3 pt-3 border-t border-[#262638] flex items-center justify-between gap-2">
-                              <span className="text-[11px] font-mono text-[#7E7E94]">
-                                CSE, Mech, ECE...
-                              </span>
-                              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-emerald-500/25 group-hover:bg-emerald-500/40 border border-emerald-500/40 group-hover:border-emerald-400 px-3.5 py-1.5 rounded-full transition-all shadow-sm">
-                                <span>Select</span>
-                                <ArrowUpRight className="w-3.5 h-3.5" />
-                              </span>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Diploma Expanded Content with single-selection collapse */}
-                        {selected10thOption === "diploma" && !isDiplomaExamsExpanded && (
-                          <div className="border-t border-[#242434] p-4 sm:p-5 bg-[#12121C] rounded-b-2xl space-y-3.5">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[11px] font-bold uppercase tracking-wider text-[#8E8E9C]">
-                                {activeDiplomaBranch
-                                  ? `Selected Branch: ${DIPLOMA_BRANCHES.find(b => b.id === activeDiplomaBranch)?.name}`
-                                  : "Popular Polytechnic Streams:"}
-                              </span>
-
-                              {activeDiplomaBranch && (
-                                <button
-                                  type="button"
-                                  onClick={() => setActiveDiplomaBranch(null)}
-                                  className="text-[11px] text-emerald-400 hover:text-emerald-300 flex items-center gap-1 font-semibold transition-colors cursor-pointer"
-                                >
-                                  <RotateCcw className="w-3 h-3" />
-                                  <span>Show All Branches</span>
-                                </button>
-                              )}
-                            </div>
-
-                            <div
-                              className={`grid transition-all duration-300 ${
-                                activeDiplomaBranch ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2 gap-2.5"
-                              }`}
-                            >
-                              <AnimatePresence>
-                                {DIPLOMA_BRANCHES
-                                  .filter((branch) => !activeDiplomaBranch || activeDiplomaBranch === branch.id)
-                                  .map((branch) => {
-                                    const isSelected = activeDiplomaBranch === branch.id;
-                                    return (
-                                      <motion.div
-                                        key={branch.id}
-                                        layout
-                                        initial={{ opacity: 0, scale: 0.95 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0.85, height: 0 }}
-                                        transition={{ duration: 0.25 }}
-                                        onClick={() => setActiveDiplomaBranch(isSelected ? null : branch.id)}
-                                        className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
-                                          isSelected
-                                            ? "border-emerald-400 bg-[#16221D] shadow-lg ring-1 ring-emerald-400/50"
-                                            : "border-[#2B2B3C] bg-[#181826] hover:border-[#3E3E56]"
-                                        }`}
-                                      >
-                                        <div className="flex items-center justify-between">
-                                          <h6 className="text-xs font-bold text-emerald-300">{branch.name}</h6>
-                                          <ChevronDown
-                                            className={`w-4 h-4 text-[#8E8E9C] transition-transform duration-200 ${
-                                              isSelected ? "rotate-180 text-emerald-400" : ""
-                                            }`}
-                                          />
-                                        </div>
-                                        <p className="text-[10px] text-[#8E8E9C] mt-1">{branch.desc}</p>
-
-                                        {isSelected && (
-                                          <motion.div
-                                            initial={{ opacity: 0 }}
-                                            animate={{ opacity: 1 }}
-                                            className="mt-3 pt-3 border-t border-[#2A3A30] space-y-2"
-                                          >
-                                            <div>
-                                              <span className="text-[9px] font-bold uppercase text-emerald-400 block mb-1">
-                                                Key Modules:
-                                              </span>
-                                              <div className="flex flex-wrap gap-1">
-                                                {branch.subjects.map((sub, idx) => (
-                                                  <span
-                                                    key={idx}
-                                                    className="px-2 py-0.5 rounded text-[10px] bg-[#12121A] text-[#C4E5D4]"
-                                                  >
-                                                    {sub}
-                                                  </span>
-                                                ))}
-                                              </div>
-                                            </div>
-                                            <p className="text-[10px] text-[#A6C4B4] leading-relaxed">
-                                              <strong>Lateral Entry Pathway:</strong> {branch.lateralEntry}
-                                            </p>
-                                          </motion.div>
-                                        )}
-                                      </motion.div>
-                                    );
-                                  })}
-                              </AnimatePresence>
-                            </div>
-                          </div>
-                        )}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
                 </div>
-
-                {/* Entrance Exams for Polytechnic / Diploma (Collapsible / Expandible) */}
-                {!isDiplomaExamsExpanded ? (
-                  <motion.div
-                    whileHover={{ scale: 1.005, borderColor: "rgba(244, 114, 182, 0.5)" }}
-                    whileTap={{ scale: 0.995 }}
-                    onClick={() => setIsDiplomaExamsExpanded(true)}
-                    className="p-4 rounded-xl bg-gradient-to-br from-[#181824] to-[#14141E] border border-[#2B2B3C] cursor-pointer group transition-all duration-200 shadow-md flex items-center justify-between gap-4"
-                  >
-                    <div className="flex items-start gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-pink-400 shrink-0 group-hover:scale-105 transition-transform">
-                        <Award className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h5 className="text-sm font-bold text-white group-hover:text-pink-300 transition-colors">
-                            Entrance Exams: After 10th for Polytechnic
-                          </h5>
-                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/15 text-pink-300 font-semibold border border-pink-500/30">
-                            State Board Entrances · 2 Exams
-                          </span>
-                        </div>
-                        <p className="text-xs text-[#8E8E9C] mt-0.5">
-                          Mandatory state polytechnic entrance tests: AP POLYCET & TG POLYCET.
-                        </p>
-                        <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-[#101018] text-pink-300 border border-pink-500/20 font-bold">AP POLYCET</span>
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-[#101018] text-pink-300 border border-pink-500/20 font-bold">TG POLYCET</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-[#1F1F2E] group-hover:bg-pink-500 text-white flex items-center justify-center shrink-0 transition-colors">
-                      <ChevronDown className="w-4 h-4" />
-                    </div>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#161624] to-[#12121C] border border-pink-500/40 shadow-xl space-y-3.5 ring-1 ring-pink-500/30"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-lg bg-pink-500/10 border border-pink-500/30 flex items-center justify-center text-pink-400">
-                          <Award className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                            <span>Entrance Exams: After 10th for Polytechnic</span>
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/15 text-pink-300 font-semibold border border-pink-500/30">
-                              State Board Entrances
-                            </span>
-                          </h4>
-                          <p className="text-[11px] text-[#8E8E9C]">
-                            Mandatory state polytechnic entrance tests for Diploma admissions:
-                          </p>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => setIsDiplomaExamsExpanded(false)}
-                        className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-[#1C1C28] hover:bg-[#252536] text-pink-300 border border-pink-500/30 flex items-center gap-1 transition-colors cursor-pointer"
-                      >
-                        <ChevronUp className="w-3.5 h-3.5" />
-                        <span>Collapse</span>
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
-                      {ENTRANCE_EXAMS_10TH.map((exam, idx) => (
-                        <div
-                          key={idx}
-                          className="p-3 rounded-xl bg-[#181826] border border-[#2B2B3C] hover:border-pink-500/40 hover:bg-[#1B1B2A] transition-all flex items-center justify-between gap-3 group"
-                        >
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2">
-                              <span className="font-extrabold text-sm text-pink-300 tracking-tight group-hover:text-pink-200">
-                                {exam.name}
-                              </span>
-                              <span className="text-[9px] px-1.5 py-0.2 rounded bg-pink-500/10 text-pink-400 border border-pink-500/20 font-bold">
-                                {exam.badge}
-                              </span>
-                            </div>
-                            <p className="text-xs text-[#CBCBD8] mt-0.5 flex items-center gap-1.5">
-                              <span className="text-[#6E6E82]">—</span>
-                              <span className="font-medium text-white/90">{exam.target}</span>
-                            </p>
-                          </div>
-                          <div className="w-6 h-6 rounded-full bg-pink-500/10 flex items-center justify-center text-pink-400 shrink-0 group-hover:scale-110 transition-transform">
-                            <ArrowUpRight className="w-3.5 h-3.5" />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
               </div>
             </motion.div>
           )}
@@ -1952,10 +1156,10 @@ export default function CareerPathwaysModal({
                   {currentStage === "class_10" ? (
                     <button
                       type="button"
-                      onClick={() => setTenthView("intermediate_diploma")}
+                      onClick={() => setTenthView("options")}
                       className="text-[#8E8E9C] hover:text-white transition-colors cursor-pointer"
                     >
-                      ← Intermediate Streams
+                      ← Post-10th Pathways
                     </button>
                   ) : (
                     <span className="font-bold text-amber-400">Degree Pathways (Post Inter / Diploma)</span>
