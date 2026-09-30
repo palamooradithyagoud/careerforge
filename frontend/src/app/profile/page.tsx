@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import CreateAccountModal from "@/components/common/CreateAccountModal";
 import StrokeText from "@/components/common/StrokeText";
+import { PageLoader } from "@/components/common/BoxLoader";
 
 function ProfilePageContent() {
   const router = useRouter();
@@ -132,9 +133,12 @@ function ProfilePageContent() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0A0A0E] flex flex-col items-center justify-center text-white gap-3">
-        <Loader2 className="w-9 h-9 animate-spin text-amber-400" />
-        <span className="text-xs text-[#8E8E9C]">Loading Student Profile Details...</span>
+      <div className="min-h-screen bg-[#0A0A0E] flex flex-col items-center justify-center">
+        <PageLoader
+          title="Loading Student Profile Details..."
+          subtitle="Assembling stage metrics, verified credentials, and roadmap milestones"
+          size={84}
+        />
       </div>
     );
   }
@@ -557,8 +561,8 @@ export default function ProfilePage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#0A0A0E] flex items-center justify-center text-white">
-          <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
+        <div className="min-h-screen bg-[#0A0A0E] flex items-center justify-center">
+          <PageLoader title="Loading Profile..." size={84} />
         </div>
       }
     >

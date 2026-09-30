@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { api } from "@/lib/api";
 import { StudentProfile, PersonalizedScholarship } from "@/types";
 import ProfileSectionModal from "@/components/profile/ProfileSectionModal";
+import { PageLoader } from "@/components/common/BoxLoader";
 import {
   ArrowLeft,
   Share2,
@@ -237,10 +238,11 @@ function ScholarshipsDetailPageContent() {
 
       {/* Loading state */}
       {isLoading && (
-        <div className="py-20 flex flex-col items-center justify-center text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-violet-400 mb-3" />
-          <p className="text-xs text-[#8E8E9C]">Evaluating match criteria...</p>
-        </div>
+        <PageLoader
+          title="Evaluating match criteria..."
+          subtitle="Analyzing student milestones against institutional eligibility criteria"
+          size={72}
+        />
       )}
 
       {/* Error state */}
@@ -390,10 +392,10 @@ export default function ScholarshipsDetailPage() {
   return (
     <Suspense
       fallback={
-        <div className="max-w-md mx-auto px-4 py-24 flex flex-col items-center justify-center text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-violet-400 mb-3" />
-          <p className="text-xs text-[#8E8E9C]">Opening Scholarships...</p>
-        </div>
+        <PageLoader
+          title="Opening Scholarships..."
+          size={84}
+        />
       }
     >
       <ScholarshipsDetailPageContent />

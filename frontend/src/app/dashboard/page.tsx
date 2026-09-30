@@ -10,6 +10,7 @@ import ProfileSectionModal from "@/components/profile/ProfileSectionModal";
 import CareerPathwaysModal from "@/components/dashboard/CareerPathwaysModal";
 import BlurText from "./BlurText";
 import StrokeText from "./StrokeText";
+import { PageLoader } from "@/components/common/BoxLoader";
 import {
   Loader2,
   AlertCircle,
@@ -105,15 +106,11 @@ function DashboardContent() {
 
   if (isLoading) {
     return (
-      <div className="max-w-md mx-auto px-4 py-28 flex flex-col items-center justify-center text-center">
-        <Loader2 className="w-9 h-9 animate-spin text-violet-400 mb-4" />
-        <h2 className="text-base font-bold text-white">
-          Personalizing Opportunities...
-        </h2>
-        <p className="text-xs text-[#8E8E9C] mt-1">
-          Loading your verified student dashboard
-        </p>
-      </div>
+      <PageLoader
+        title="Personalizing Opportunities..."
+        subtitle="Loading your verified student dashboard"
+        size={84}
+      />
     );
   }
 
@@ -324,10 +321,10 @@ export default function DashboardPage() {
   return (
     <Suspense
       fallback={
-        <div className="max-w-md mx-auto px-4 py-24 flex flex-col items-center justify-center text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-violet-400 mb-3" />
-          <p className="text-xs text-[#8E8E9C]">Loading Dashboard...</p>
-        </div>
+        <PageLoader
+          title="Loading Dashboard..."
+          size={84}
+        />
       }
     >
       <DashboardContent />

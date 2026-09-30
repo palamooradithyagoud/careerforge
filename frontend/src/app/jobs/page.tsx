@@ -16,6 +16,7 @@ import { StudentProfile } from "@/types";
 import { api } from "@/lib/api";
 import JobPathCards from "@/components/jobs/JobPathCards";
 import JobFitModal from "@/components/jobs/JobFitModal";
+import { PageLoader } from "@/components/common/BoxLoader";
 import {
   ArrowLeft,
   Briefcase,
@@ -276,8 +277,8 @@ function JobsPageContent() {
 
   if (!isClientMounted) {
     return (
-      <div className="min-h-screen bg-[#0C0C10] flex items-center justify-center text-white">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+      <div className="min-h-screen bg-[#0C0C10] flex items-center justify-center">
+        <PageLoader title="Loading Opportunities..." size={84} />
       </div>
     );
   }
@@ -579,8 +580,8 @@ export default function JobsPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#0C0C10] flex items-center justify-center text-white">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+        <div className="min-h-screen bg-[#0C0C10] flex items-center justify-center">
+          <PageLoader title="Loading Opportunities..." size={84} />
         </div>
       }
     >

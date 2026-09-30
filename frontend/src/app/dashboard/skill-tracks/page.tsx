@@ -3,6 +3,7 @@
 import React, { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { PageLoader } from "@/components/common/BoxLoader";
 import {
   ArrowLeft,
   Briefcase,
@@ -454,10 +455,11 @@ function SkillTracksPageContent() {
       {/* 4. CONTENT LIST */}
       <div className="space-y-6">
         {!isLoaded ? (
-          <div className="py-20 flex flex-col items-center justify-center text-xs text-slate-400">
-            <Loader2 className="w-7 h-7 animate-spin text-teal-400 mb-2" />
-            <span>Loading Skill Tracks...</span>
-          </div>
+          <PageLoader
+            title="Loading Skill Tracks..."
+            subtitle="Fetching curriculum modules, saved job tracks, and curated video courses"
+            size={72}
+          />
         ) : roadmaps.length === 0 ? (
           <div className="py-20 px-4 text-center flex flex-col items-center justify-center rounded-3xl bg-[#14141C] border border-[#262634]">
             <div className="w-16 h-16 rounded-2xl bg-[#1D1D28] border border-white/10 flex items-center justify-center text-teal-400 mb-4 shadow-md">
@@ -1142,10 +1144,10 @@ export default function SkillTracksPage() {
   return (
     <Suspense
       fallback={
-        <div className="max-w-md mx-auto px-4 py-24 flex flex-col items-center justify-center text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-teal-400 mb-3" />
-          <p className="text-xs text-[#8E8E9C]">Loading Skill Tracks...</p>
-        </div>
+        <PageLoader
+          title="Loading Skill Tracks..."
+          size={84}
+        />
       }
     >
       <SkillTracksPageContent />
