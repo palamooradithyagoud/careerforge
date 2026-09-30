@@ -32,6 +32,7 @@ import {
   UserPlus
 } from "lucide-react";
 import CreateAccountModal from "@/components/common/CreateAccountModal";
+import StrokeText from "@/components/common/StrokeText";
 
 function ProfilePageContent() {
   const router = useRouter();
@@ -210,9 +211,22 @@ function ProfilePageContent() {
 
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2.5 flex-wrap">
-                  <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                    {profile.name}
-                  </h1>
+                  <StrokeText
+                    text={profile.name}
+                    strokeColor="#A78BFA"
+                    fillColor="#F8FAFC"
+                    strokeWidth={1.3}
+                    drawDuration={1.5}
+                    fillDelay={0.15}
+                    stagger={0.04}
+                    ease="power2.out"
+                    trigger="mount"
+                    fillMode="wipe"
+                    fontSize={22}
+                    fontWeight={800}
+                    letterSpacing={-0.5}
+                    reverse={false}
+                  />
                   <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full border ${stageConfig.badgeBg}`}>
                     <ShieldCheck className="w-3.5 h-3.5" />
                     <span>{stageConfig.gradeBadge}</span>

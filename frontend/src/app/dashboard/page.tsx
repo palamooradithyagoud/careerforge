@@ -9,6 +9,7 @@ import OverviewCards from "@/components/dashboard/OverviewCards";
 import ProfileSectionModal from "@/components/profile/ProfileSectionModal";
 import CareerPathwaysModal from "@/components/dashboard/CareerPathwaysModal";
 import BlurText from "./BlurText";
+import StrokeText from "./StrokeText";
 import {
   Loader2,
   AlertCircle,
@@ -162,9 +163,23 @@ function DashboardContent() {
             <span className="text-xs text-[#8E8E9C] font-normal block leading-tight">
               Welcome back
             </span>
-            <span className="font-bold text-base text-white block tracking-tight group-hover:text-amber-300 transition-colors">
-              {studentName}
-            </span>
+            <StrokeText
+              text={studentName}
+              strokeColor="#A78BFA"
+              fillColor="#F8FAFC"
+              strokeWidth={1.2}
+              drawDuration={1.5}
+              fillDelay={0.15}
+              stagger={0.03}
+              ease="power2.out"
+              trigger="mount"
+              fillMode="wipe"
+              fontSize={18}
+              fontWeight={700}
+              letterSpacing={-0.3}
+              reverse={false}
+              className="mt-0.5"
+            />
           </div>
         </button>
 

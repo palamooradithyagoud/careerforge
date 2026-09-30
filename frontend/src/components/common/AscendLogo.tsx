@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import StrokeText from "@/components/common/StrokeText";
 
 interface AscendLogoProps {
   size?: "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
@@ -23,12 +24,12 @@ export default function AscendLogo({
 }: AscendLogoProps) {
   // Dimensions mapping
   const dimensions = {
-    xs: { icon: 20, text: "text-xs tracking-[0.2em]" },
-    sm: { icon: 26, text: "text-sm tracking-[0.22em]" },
-    md: { icon: 34, text: "text-base tracking-[0.25em]" },
-    lg: { icon: 44, text: "text-xl tracking-[0.28em]" },
-    xl: { icon: 60, text: "text-2xl tracking-[0.3em]" },
-    "2xl": { icon: 84, text: "text-4xl tracking-[0.32em]" },
+    xs: { icon: 20, fontSize: 13, strokeWidth: 0.9, letterSpacing: 2 },
+    sm: { icon: 26, fontSize: 16, strokeWidth: 1.0, letterSpacing: 2.5 },
+    md: { icon: 34, fontSize: 20, strokeWidth: 1.2, letterSpacing: 3 },
+    lg: { icon: 44, fontSize: 26, strokeWidth: 1.3, letterSpacing: 4 },
+    xl: { icon: 60, fontSize: 34, strokeWidth: 1.4, letterSpacing: 5 },
+    "2xl": { icon: 84, fontSize: 48, strokeWidth: 1.6, letterSpacing: 6 },
   }[size];
 
   const iconElement = (
@@ -52,16 +53,25 @@ export default function AscendLogo({
   );
 
   const textElement = showText && (
-    <div className="flex flex-col select-none">
-      <span
-        className={`font-black font-sans uppercase text-white drop-shadow-sm flex items-center ${dimensions.text}`}
-        style={{ letterSpacing: "0.26em" }}
-      >
-        {/* Stylized geometric typography with crossbar-less A matching the logo */}
-        <span className="text-amber-400 mr-[1px]">Λ</span>SCEND
-      </span>
+    <div className="flex flex-col select-none justify-center">
+      <StrokeText
+        text="ASCEND"
+        strokeColor="#F59E0B"
+        fillColor="#F8FAFC"
+        strokeWidth={dimensions.strokeWidth}
+        drawDuration={1.4}
+        fillDelay={0.15}
+        stagger={0.06}
+        ease="power2.out"
+        trigger="mount"
+        fillMode="wipe"
+        fontSize={dimensions.fontSize}
+        fontWeight={900}
+        letterSpacing={dimensions.letterSpacing}
+        reverse={false}
+      />
       {size === "xl" || size === "2xl" ? (
-        <span className="text-[10px] tracking-[0.25em] text-[#8E8E9C] font-semibold uppercase -mt-0.5">
+        <span className="text-[10px] tracking-[0.25em] text-[#8E8E9C] font-semibold uppercase mt-0.5">
           Student Career Intelligence
         </span>
       ) : null}

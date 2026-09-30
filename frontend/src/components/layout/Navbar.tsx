@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Compass, Sparkles, User, LogOut, ArrowUpRight } from "lucide-react";
 
 import AscendLogo from "@/components/common/AscendLogo";
+import StrokeText from "@/components/common/StrokeText";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -103,10 +104,25 @@ export default function Navbar() {
                 className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#181824] hover:bg-[#222232] border border-[#282838] hover:border-[#38384C] text-xs text-white transition-all cursor-pointer"
                 title="View Profile Section"
               >
-                <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-400 to-pink-500 flex items-center justify-center text-black font-bold text-[11px]">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-400 to-pink-500 flex items-center justify-center text-black font-bold text-[11px] shrink-0">
                   {userName.charAt(0).toUpperCase()}
                 </div>
-                <span className="font-medium">{userName}</span>
+                <StrokeText
+                  text={userName}
+                  strokeColor="#A78BFA"
+                  fillColor="#F8FAFC"
+                  strokeWidth={0.9}
+                  drawDuration={1.3}
+                  fillDelay={0.1}
+                  stagger={0.03}
+                  ease="power2.out"
+                  trigger="mount"
+                  fillMode="wipe"
+                  fontSize={13}
+                  fontWeight={600}
+                  letterSpacing={0}
+                  reverse={false}
+                />
               </Link>
               <button
                 onClick={handleLogout}
