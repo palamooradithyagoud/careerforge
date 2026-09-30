@@ -1,18 +1,15 @@
 "use client";
 
-import React, { useState, useEffect, useTransition } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
   Search,
-  ExternalLink,
   Clock,
   Sparkles,
   RefreshCw,
   Newspaper,
   Flame,
-  Globe,
-  Radio,
   Cpu,
   ArrowUpRight,
   AlertCircle
@@ -37,12 +34,12 @@ interface TechbitsModalProps {
 }
 
 const COMPANY_FILTERS = [
-  { id: "All", label: "All", brandColor: "from-pink-500 to-rose-500", activeBg: "bg-pink-500/20 text-pink-300 border-pink-500/40" },
-  { id: "Google", label: "Google", brandColor: "from-blue-500 to-cyan-500", activeBg: "bg-blue-500/20 text-blue-300 border-blue-500/40" },
-  { id: "NVIDIA", label: "NVIDIA", brandColor: "from-emerald-500 to-green-500", activeBg: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" },
-  { id: "Microsoft", label: "Microsoft", brandColor: "from-sky-500 to-blue-500", activeBg: "bg-sky-500/20 text-sky-300 border-sky-500/40" },
-  { id: "Apple", label: "Apple", brandColor: "from-neutral-400 to-zinc-400", activeBg: "bg-neutral-500/20 text-neutral-200 border-neutral-400/40" },
-  { id: "OpenAI", label: "OpenAI", brandColor: "from-teal-500 to-emerald-500", activeBg: "bg-teal-500/20 text-teal-300 border-teal-500/40" }
+  { id: "All", label: "All", activeBg: "bg-pink-500/20 text-pink-300 border-pink-500/40" },
+  { id: "Google", label: "Google", activeBg: "bg-blue-500/20 text-blue-300 border-blue-500/40" },
+  { id: "NVIDIA", label: "NVIDIA", activeBg: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" },
+  { id: "Microsoft", label: "Microsoft", activeBg: "bg-sky-500/20 text-sky-300 border-sky-500/40" },
+  { id: "Apple", label: "Apple", activeBg: "bg-neutral-500/20 text-neutral-200 border-neutral-400/40" },
+  { id: "OpenAI", label: "OpenAI", activeBg: "bg-teal-500/20 text-teal-300 border-teal-500/40" }
 ];
 
 function formatTimeAgo(isoString: string): string {
@@ -78,7 +75,6 @@ export default function CareerPathwaysModal({
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
 
   // Fetch articles from /api/techbits
   const fetchArticles = async (company: string, query: string) => {
@@ -109,13 +105,32 @@ export default function CareerPathwaysModal({
     }
   }, [isOpen, selectedCompany, activeQuery]);
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setActiveQuery(searchQuery);
-  };
-
+  // Synchronize State Between Search & Tabs:
+  // 1. When a user clicks a company filter chip: clear custom search text and search query
   const handleCompanySelect = (companyId: string) => {
     setSelectedCompany(companyId);
+    setSearchQuery("");
+    setActiveQuery("");
+  };
+
+  // 2. When a user types a custom search into the search bar: deselect fixed company tabs
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setSearchQuery(val);
+    if (val && selectedCompany !== "All") {
+      setSelectedCompany("All");
+    }
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSelectedCompany("All");
+    setActiveQuery(searchQuery.trim());
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+    setActiveQuery("");
   };
 
   const handleClearFilters = () => {
@@ -123,6 +138,23 @@ export default function CareerPathwaysModal({
     setActiveQuery("");
     setSelectedCompany("All");
   };
+
+  // 3. Client-Side Title / Headline Validation (Fallback Filter)
+  const displayedArticles = articles.filter((article) => {
+    if (selectedCompany === "All") return true;
+    const activeCompany = selectedCompany.toLowerCase();
+    const title = (article.title || "").toLowerCase();
+    const desc = (article.description || "").toLowerCase();
+    if (activeCompany === "openai") {
+      return (
+        title.includes("openai") ||
+        desc.includes("openai") ||
+        title.includes("chatgpt") ||
+        desc.includes("chatgpt")
+      );
+    }
+    return title.includes(activeCompany) || desc.includes(activeCompany);
+  });
 
   if (!isOpen) return null;
 
@@ -183,7 +215,7 @@ export default function CareerPathwaysModal({
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={handleSearchChange}
                 placeholder="Search any tech keyword (e.g. AI, Quantum, LLMs, Cybersecurity)..."
                 className="w-full pl-10 pr-24 py-2.5 rounded-xl bg-[#161622] border border-[#2B2B3E] text-white text-xs sm:text-sm placeholder-[#6E6E84] focus:outline-none focus:border-pink-500/60 focus:ring-1 focus:ring-pink-500/50 transition-all"
               />
@@ -191,11 +223,8 @@ export default function CareerPathwaysModal({
                 {searchQuery && (
                   <button
                     type="button"
-                    onClick={() => {
-                      setSearchQuery("");
-                      setActiveQuery("");
-                    }}
-                    className="p-1 text-[#8E8E9F] hover:text-white rounded-md transition-colors text-xs"
+                    onClick={handleClearSearch}
+                    className="p-1 text-[#8E8E9F] hover:text-white rounded-md transition-colors text-xs cursor-pointer"
                     title="Clear search"
                   >
                     <X className="w-3.5 h-3.5" />
@@ -246,7 +275,7 @@ export default function CareerPathwaysModal({
                   <strong className="text-white">
                     {selectedCompany === "All" ? "Latest Tech" : selectedCompany}
                   </strong>{" "}
-                  stories
+                  ({displayedArticles.length} stories)
                   {activeQuery && (
                     <>
                       {" "}matching &ldquo;<span className="text-pink-400">{activeQuery}</span>&rdquo;
@@ -303,7 +332,7 @@ export default function CareerPathwaysModal({
             )}
 
             {/* Empty State */}
-            {!loading && !error && articles.length === 0 && (
+            {!loading && !error && displayedArticles.length === 0 && (
               <div className="p-10 text-center rounded-2xl bg-[#13131D] border border-[#232332] space-y-3 my-6">
                 <div className="w-12 h-12 rounded-2xl bg-pink-500/10 border border-pink-500/20 text-pink-400 flex items-center justify-center mx-auto">
                   <Newspaper className="w-6 h-6" />
@@ -325,9 +354,9 @@ export default function CareerPathwaysModal({
             )}
 
             {/* Article Cards Grid */}
-            {!loading && !error && articles.length > 0 && (
+            {!loading && !error && displayedArticles.length > 0 && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {articles.map((item, index) => (
+                {displayedArticles.map((item, index) => (
                   <TechbitCard key={`${item.url}-${index}`} article={item} />
                 ))}
               </div>

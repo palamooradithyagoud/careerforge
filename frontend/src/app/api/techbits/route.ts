@@ -14,6 +14,14 @@ interface NewsArticle {
   content: string | null;
 }
 
+const COMPANY_QUERIES: Record<string, string> = {
+  Google: '"Google"',
+  NVIDIA: '"NVIDIA"',
+  Apple: '"Apple" AND (tech OR iPhone OR Mac OR iOS OR AI)',
+  Microsoft: '"Microsoft"',
+  OpenAI: '"OpenAI" OR "ChatGPT"'
+};
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -27,22 +35,24 @@ export async function GET(request: Request) {
       process.env.NEXT_PUBLIC_NEWS_API_KEY ||
       "b65681a5bb0d42778772d44a29c2b0c4";
 
-    // Build targeted query
+    // 1. Strict Company Queries with mandatory keyword matching
     let query = "";
     if (company && company !== "All") {
+      const baseCompanyQuery = COMPANY_QUERIES[company] || `"${company}"`;
       if (searchKeyword) {
-        query = `${company} AND (${searchKeyword})`;
+        query = `(${baseCompanyQuery}) AND (${searchKeyword})`;
       } else {
-        query = company;
+        query = baseCompanyQuery;
       }
     } else {
-      query = searchKeyword || "technology OR AI OR software OR semiconductor";
+      query = searchKeyword || "technology OR AI OR software OR hardware";
     }
 
+    // 2. Limit domains to quality technology publications & restrict search to title,description
     const domains = "techcrunch.com,theverge.com,wired.com,arstechnica.com";
     const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(
       query
-    )}&domains=${domains}&language=en&sortBy=publishedAt&pageSize=${pageSize}&page=${page}`;
+    )}&searchIn=title,description&domains=${domains}&language=en&sortBy=publishedAt&pageSize=${pageSize}&page=${page}`;
 
     const res = await fetch(url, {
       headers: {
@@ -67,8 +77,8 @@ export async function GET(request: Request) {
 
     const data = await res.json();
 
-    // Filter out [Removed] and invalid spam from NewsAPI
-    const validArticles: NewsArticle[] = (data.articles || []).filter(
+    // 3. Filter out [Removed] and invalid spam from NewsAPI
+    let validArticles: NewsArticle[] = (data.articles || []).filter(
       (a: NewsArticle) =>
         a &&
         a.title &&
@@ -77,9 +87,27 @@ export async function GET(request: Request) {
         a.url
     );
 
+    // 4. Server-Side Strict Headline/Description Match for selected company
+    if (company && company !== "All") {
+      const compLower = company.toLowerCase();
+      validArticles = validArticles.filter((article) => {
+        const title = (article.title || "").toLowerCase();
+        const desc = (article.description || "").toLowerCase();
+        if (compLower === "openai") {
+          return (
+            title.includes("openai") ||
+            desc.includes("openai") ||
+            title.includes("chatgpt") ||
+            desc.includes("chatgpt")
+          );
+        }
+        return title.includes(compLower) || desc.includes(compLower);
+      });
+    }
+
     return NextResponse.json({
       status: "ok",
-      totalResults: data.totalResults ?? validArticles.length,
+      totalResults: validArticles.length,
       articles: validArticles
     });
   } catch (error: any) {
