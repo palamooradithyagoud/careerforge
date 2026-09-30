@@ -34,7 +34,7 @@ export default function CareerPathwaysModal({
           {/* Header */}
           <div className="p-4 border-b border-[#20202C] flex items-center justify-between">
             <h2 className="text-base font-semibold text-white tracking-tight">
-              Career Pathways
+              Techbits
             </h2>
             <button
               type="button"
