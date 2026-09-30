@@ -16,7 +16,10 @@
 
 **ASCEND** is an enterprise-grade, end-to-end student navigation and career acceleration ecosystem. Engineered with state-of-the-art AI architecture, ASCEND builds an adaptive, verifiable student intelligence profile that evolves alongside the learner—from **Class 10 foundational exploration** and **Intermediate (+2) stream specialization** through **B.Tech / Higher Education professionalization**.
 
-ASCEND seamlessly bridges academic achievement with institutional outcomes through **Chroma Cloud vector-retrieval (RAG)**, deterministic scholarship scoring, live industry job aggregation, curriculum roadmaps with video coursework, and an autonomous **Domain-Based AI Agent** fortified with automated multi-LLM failover.
+ASCEND seamlessly bridges academic achievement with institutional outcomes through **Chroma Cloud vector-retrieval (RAG)**, deterministic scholarship scoring, live industry job aggregation, curriculum roadmaps with video coursework, **⚡ Skill Bits** (short-form 30–60s technical reels), **📰 Tech News** (personalized industry intelligence), and an autonomous **Domain-Based AI Agent** fortified with automated multi-LLM failover.
+
+By connecting Tech News directly to Skill Bits, Skill Tracks, and Job Pathways, ASCEND establishes a powerful closed-loop product flywheel:  
+$$\boxed{\textbf{Discover} \longrightarrow \textbf{Understand} \longrightarrow \textbf{Learn} \longrightarrow \textbf{Apply}}$$
 
 ---
 
@@ -117,7 +120,73 @@ ASCEND eliminates scholarship discovery fatigue through a hybrid recommendation 
 
 ---
 
-### 5. 🤖 Autonomous Domain-Based AI Agent (Ascend AI Assistant)
+### 5. ⚡ Skill Bits — Rapid Technical Micro-Learning
+**Skill Bits** is ASCEND's short-form technical micro-learning engine designed for high-density knowledge acquisition.
+- **The Philosophy**: *"I have 60 seconds. Teach me something truly useful."*
+- **Format**: High-impact, vertical reel-style technical breakdowns delivered in **30 to 60 seconds**.
+- **How it works**:
+  $$\text{Choose a Skill} \longrightarrow \text{Watch Skill Bit} \longrightarrow \text{Master 1 Core Concept} \longrightarrow \text{Quick Interactive Check} \longrightarrow \text{Continue or Deep Dive}$$
+- **Curated Skill Bit Examples**:
+  - `What is an API?` — 40 sec
+  - `JWT Authentication Explained` — 50 sec
+  - `What is RAG (Retrieval-Augmented Generation)?` — 55 sec
+  - `Git Merge vs. Rebase` — 45 sec
+  - `Binary Search in Action` — 60 sec
+  - `Docker Containers in 45 Seconds` — 45 sec
+  - `What is a Large Language Model (LLM)?` — 50 sec
+- **Strategic Value**: Skill Bits do not replace deep courses—they serve as high-converting discovery hooks that demystify intimidating concepts before students plunge into comprehensive curriculum roadmaps.
+
+---
+
+### 6. 📰 Tech News — Profile-Curated Industry Intelligence
+Rather than a generic RSS firehose, **Tech News** is an intelligent industry radar curated specifically around the student's enrolled education stage, active skills, and target career pathway.
+
+#### Core Intelligence Domains:
+- 🤖 **AI & Machine Learning** (LLMs, Foundation Models, Multi-Agent Frameworks)
+- 💻 **Software Development** (Modern Frameworks, Runtime Architecture, System Design)
+- ☁️ **Cloud & DevOps** (Kubernetes, Serverless, Infrastructure as Code)
+- 🔐 **Cybersecurity** (Zero Trust, Application Security, Threat Intelligence)
+- 📊 **Data Science** (Vector Search, Feature Engineering, Distributed Compute)
+- 🚀 **Startups & Venture Capital** (Ecosystem Funding, Product Launches)
+- 💼 **Jobs & Market Hiring** (Hiring Surges, Emerging Roles, Compensation Shifts)
+- 🧑‍💻 **Developer Tools** (Compilers, Toolchains, Observability)
+- 📱 **Emerging Technologies** (Quantum, Edge AI, AR/VR)
+
+#### Contextual Enrichment Layer:
+Every incoming news item is augmented with real-time career relevancy metadata:
+- **Why This Matters**: E.g., *"A new open-source agent framework was released — directly impacting Generative AI application development."*
+- **Related Skills**: `LLM APIs` · `RAG` · `Vector Databases` · `FastAPI`
+- **Instant Actions**:
+  - ⚡ *Watch related Skill Bit*
+  - 📚 *Open matched AI Learning Path*
+  - 💼 *Explore live vacancies requiring these tools*
+
+---
+
+### 7. 🔥 The Unified Product Engine: Discover → Understand → Learn → Apply
+Rather than treating News, Reels, Roadmaps, and Job Portals as disconnected silos, ASCEND binds them into an uninterrupted **Knowledge & Career Flywheel**:
+
+```mermaid
+flowchart TD
+    NEWS["📰 TECH NEWS<br/><b>Discover</b> emerging trend or framework"] --> IDENT["🔍 Profile AI Engine<br/>Matches news to student's career vector"]
+    IDENT --> BIT["⚡ SKILL BIT<br/><b>Understand</b> fundamental concept in 50 seconds"]
+    BIT --> QUIZ["⚡ Rapid Action / Quiz<br/>Validate comprehension"]
+    QUIZ --> TRACK["📚 LEARNING PATH<br/><b>Learn</b> comprehensive curriculum & video labs"]
+    TRACK --> APPLY["💼 JOB PATHWAYS & SCHOLARSHIPS<br/><b>Apply</b> to matched live jobs & institutional funding"]
+
+    style NEWS fill:#181824,stroke:#3B82F6,stroke-width:2px,color:#fff
+    style IDENT fill:#1E1B4B,stroke:#6366F1,stroke-width:2px,color:#fff
+    style BIT fill:#2E1065,stroke:#8B5CF6,stroke-width:2px,color:#fff
+    style QUIZ fill:#1E293B,stroke:#64748B,stroke-width:2px,color:#fff
+    style TRACK fill:#042F2E,stroke:#14B8A6,stroke-width:2px,color:#fff
+    style APPLY fill:#2D1500,stroke:#F59E0B,stroke-width:2px,color:#fff
+```
+
+$$\boxed{\textbf{Discover (Tech News)} \longrightarrow \textbf{Understand (Skill Bits)} \longrightarrow \textbf{Learn (Skill Tracks)} \longrightarrow \textbf{Apply (Jobs & Grants)}}$$
+
+---
+
+### 8. 🤖 Autonomous Domain-Based AI Agent (Ascend AI Assistant)
 ASCEND features a dedicated, multi-turn AI Agent specifically fine-tuned for education and career advisory:
 
 ```mermaid
