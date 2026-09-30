@@ -759,13 +759,16 @@ export default function CareerPathwaysModal({
   onSelectStreamForScholarships
 }: CareerPathwaysModalProps) {
   // Active stage (auto-detected from educationStage prop or localStorage session, with header quick-switcher)
-  const [currentStage, setCurrentStage] = useState<"class_10" | "intermediate" | "b_tech">("class_10");
+  const [currentStage, setCurrentStage] = useState<"intermediate" | "b_tech">("intermediate");
 
   useEffect(() => {
     if (educationStage) {
       const s = educationStage.toLowerCase();
-      if (s === "class_10" || s === "intermediate" || s === "b_tech") {
-        setCurrentStage(s as any);
+      if (s === "b_tech") {
+        setCurrentStage("b_tech");
+        return;
+      } else {
+        setCurrentStage("intermediate");
         return;
       }
     }
@@ -776,15 +779,18 @@ export default function CareerPathwaysModal({
           const parsed = JSON.parse(saved);
           if (parsed.education_stage) {
             const s = parsed.education_stage.toLowerCase();
-            if (s === "class_10" || s === "intermediate" || s === "b_tech") {
-              setCurrentStage(s as any);
+            if (s === "b_tech") {
+              setCurrentStage("b_tech");
+              return;
+            } else {
+              setCurrentStage("intermediate");
               return;
             }
           }
         }
       } catch {}
     }
-    setCurrentStage("class_10");
+    setCurrentStage("intermediate");
   }, [educationStage, isOpen]);
 
   // 10th student views:
@@ -816,7 +822,7 @@ export default function CareerPathwaysModal({
 
   if (!isOpen) return null;
 
-  const handleResetAll = (newStage?: "class_10" | "intermediate" | "b_tech") => {
+  const handleResetAll = (newStage?: "intermediate" | "b_tech") => {
     setTenthView("options");
     setSelected10thOption(null);
     setIsDropdownOpen(true);
@@ -836,32 +842,12 @@ export default function CareerPathwaysModal({
   };
 
   const canGoBack =
-    currentStage === "class_10"
-      ? tenthView !== "options"
-      : currentStage === "intermediate"
+    currentStage === "intermediate"
       ? activeAfterInterSubgroup !== null || isInterExamsExpanded
       : activeDegreeOption !== null || isDegreeExamsExpanded;
 
   const handleBack = () => {
-    if (currentStage === "class_10") {
-      if (tenthView === "subgroups") {
-        if (isInterExamsExpanded) {
-          setIsInterExamsExpanded(false);
-        } else if (activeAfterInterSubgroup) {
-          setActiveAfterInterSubgroup(null);
-        } else {
-          setTenthView("options");
-        }
-      } else if (tenthView === "degree") {
-        if (isDegreeExamsExpanded) {
-          setIsDegreeExamsExpanded(false);
-        } else if (activeDegreeOption) {
-          setActiveDegreeOption(null);
-        } else {
-          setTenthView("options");
-        }
-      }
-    } else if (currentStage === "intermediate") {
+    if (currentStage === "intermediate") {
       if (isInterExamsExpanded) {
         setIsInterExamsExpanded(false);
       } else if (activeAfterInterSubgroup) {
@@ -926,14 +912,12 @@ export default function CareerPathwaysModal({
                     <Compass className="w-5 h-5 text-pink-400" />
                     <span>Career Pathways</span>
                   </h2>
-                  <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-pink-500/15 border border-pink-500/30 text-pink-300">
-                    {currentStage === "class_10" ? "Post-10th" : currentStage === "intermediate" ? "Degree Tracks" : "Post-Degree"}
+                  <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300">
+                    {currentStage === "intermediate" ? "Degree Tracks" : "Post-Degree"}
                   </span>
                 </div>
                 <p className="text-xs text-[#8E8E9C] mt-0.5">
-                  {currentStage === "class_10"
-                    ? "Post-10th Pathways · Academic & Higher Education Trajectories"
-                    : currentStage === "intermediate"
+                  {currentStage === "intermediate"
                     ? "Degree Pathways · Career Trajectories after Intermediate / Diploma"
                     : "Post-Degree Specializations · Higher Studies, Placements, Civil & Research"}
                 </p>
@@ -970,17 +954,6 @@ export default function CareerPathwaysModal({
               <div className="inline-flex items-center p-0.5 rounded-xl bg-[#0E0E16] border border-[#242436]">
                 <button
                   type="button"
-                  onClick={() => handleResetAll("class_10")}
-                  className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
-                    currentStage === "class_10"
-                      ? "bg-pink-500/25 text-pink-300 border border-pink-500/40 shadow-xs font-extrabold"
-                      : "text-[#8E8E9C] hover:text-white"
-                  }`}
-                >
-                  10th Student
-                </button>
-                <button
-                  type="button"
                   onClick={() => handleResetAll("intermediate")}
                   className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
                     currentStage === "intermediate"
@@ -1011,89 +984,11 @@ export default function CareerPathwaysModal({
 
           {/* ========================================================================= */}
           {/* ========================================================================= */}
-          {/* 10th STUDENT VIEW: POST-10th PATHWAYS                                     */}
-          {/* ========================================================================= */}
-          {currentStage === "class_10" && tenthView === "options" && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="space-y-4"
-            >
-              <div className="flex items-center justify-between pb-1">
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="font-semibold text-[#8E8E9C] uppercase tracking-wider">
-                    Post-10th Pathways
-                  </span>
-                </div>
-                <span className="text-xs text-pink-400 font-semibold px-2.5 py-0.5 rounded-full bg-pink-500/10 border border-pink-500/20">
-                  Class 10
-                </span>
-              </div>
-
-              {/* Symmetric Higher Educational Pathways Navigation */}
-              <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-[#181824] to-[#14141E] border border-[#2B2B3C] space-y-4 shadow-lg ring-1 ring-pink-500/20">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-pink-500/15 border border-pink-500/30 flex items-center justify-center text-pink-400 shrink-0">
-                    <Compass className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                      <span>Explore Higher Educational Pathways</span>
-                    </h4>
-                    <p className="text-xs text-[#8E8E9C] mt-0.5">
-                      Navigate to subsequent career tracks and degree specializations:
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => handleResetAll("intermediate")}
-                    className="p-4 rounded-xl bg-[#181826] border border-amber-400/30 hover:border-amber-400/60 hover:bg-[#1E1E2C] transition-all flex items-center justify-between gap-3 text-left cursor-pointer group shadow-sm hover:scale-[1.01]"
-                  >
-                    <div>
-                      <span className="font-bold text-sm sm:text-base text-amber-300 group-hover:text-amber-200 block">
-                        Inter / Diploma Pathways
-                      </span>
-                      <span className="text-xs text-[#8E8E9C] mt-1 block leading-relaxed">
-                        14 career subgroups & 11 major entrance exams
-                      </span>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-amber-400/10 text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                      <ArrowUpRight className="w-4 h-4" />
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleResetAll("b_tech")}
-                    className="p-4 rounded-xl bg-[#181826] border border-blue-400/30 hover:border-blue-400/60 hover:bg-[#1E1E2C] transition-all flex items-center justify-between gap-3 text-left cursor-pointer group shadow-sm hover:scale-[1.01]"
-                  >
-                    <div>
-                      <span className="font-bold text-sm sm:text-base text-blue-300 group-hover:text-blue-200 block">
-                        Undergraduate Pathways
-                      </span>
-                      <span className="text-xs text-[#8E8E9C] mt-1 block leading-relaxed">
-                        Degree tracks, placements, GATE & civil services
-                      </span>
-                    </div>
-                    <div className="w-8 h-8 rounded-full bg-blue-400/10 text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
-                      <ArrowUpRight className="w-4 h-4" />
-                    </div>
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {/* ========================================================================= */}
           {/* INTERMEDIATE / DEGREE PATHWAYS: 14 CAREER SUBGROUPS                       */}
           {/* Directly shown for Intermediate students (10th skipped); accessible for 10th*/}
           {/* When an option is clicked, all other 13 collapse!                         */}
           {/* ========================================================================= */}
-          {(currentStage === "intermediate" || (currentStage === "class_10" && tenthView === "subgroups")) && (
+          {currentStage === "intermediate" && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1101,17 +996,7 @@ export default function CareerPathwaysModal({
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs">
-                  {currentStage === "class_10" ? (
-                    <button
-                      type="button"
-                      onClick={() => setTenthView("options")}
-                      className="text-[#8E8E9C] hover:text-white transition-colors cursor-pointer"
-                    >
-                      ← Post-10th Pathways
-                    </button>
-                  ) : (
-                    <span className="font-bold text-amber-400">Degree Pathways (Post Inter / Diploma)</span>
-                  )}
+                  <span className="font-bold text-amber-400">Degree Pathways (Post Inter / Diploma)</span>
                   {activeAfterInterSubgroup && (
                     <>
                       <span className="text-[#55556A]">/</span>
@@ -1515,7 +1400,7 @@ export default function CareerPathwaysModal({
           {/* Directly shown for Undergrad (pre-degree skipped); accessible for 10th    */}
           {/* When an option is clicked, all others collapse!                          */}
           {/* ========================================================================= */}
-          {(currentStage === "b_tech" || (currentStage === "class_10" && tenthView === "degree")) && (
+          {currentStage === "b_tech" && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -1523,17 +1408,7 @@ export default function CareerPathwaysModal({
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs">
-                  {currentStage === "class_10" ? (
-                    <button
-                      type="button"
-                      onClick={() => setTenthView("options")}
-                      className="text-[#8E8E9C] hover:text-white transition-colors cursor-pointer"
-                    >
-                      ← Post-10th Options
-                    </button>
-                  ) : (
-                    <span className="font-bold text-blue-400">Post-Degree Pathways</span>
-                  )}
+                  <span className="font-bold text-blue-400">Post-Degree Pathways</span>
                   {activeDegreeOption && (
                     <>
                       <span className="text-[#55556A]">/</span>
