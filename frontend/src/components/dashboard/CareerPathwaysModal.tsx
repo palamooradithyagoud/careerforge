@@ -837,17 +837,13 @@ export default function CareerPathwaysModal({
 
   const canGoBack =
     currentStage === "class_10"
-      ? tenthView !== "options" || is10thExamsExpanded
+      ? tenthView !== "options"
       : currentStage === "intermediate"
       ? activeAfterInterSubgroup !== null || isInterExamsExpanded
       : activeDegreeOption !== null || isDegreeExamsExpanded;
 
   const handleBack = () => {
     if (currentStage === "class_10") {
-      if (is10thExamsExpanded) {
-        setIs10thExamsExpanded(false);
-        return;
-      }
       if (tenthView === "subgroups") {
         if (isInterExamsExpanded) {
           setIsInterExamsExpanded(false);
@@ -936,7 +932,7 @@ export default function CareerPathwaysModal({
                 </div>
                 <p className="text-xs text-[#8E8E9C] mt-0.5">
                   {currentStage === "class_10"
-                    ? "Post-10th Pathways · State Entrance Exams & Career Gateways"
+                    ? "Post-10th Pathways · Academic & Higher Education Trajectories"
                     : currentStage === "intermediate"
                     ? "Degree Pathways · Career Trajectories after Intermediate / Diploma"
                     : "Post-Degree Specializations · Higher Studies, Placements, Civil & Research"}
@@ -1014,7 +1010,8 @@ export default function CareerPathwaysModal({
         <div className="p-5 sm:p-6 overflow-y-auto space-y-6 flex-1 custom-scrollbar">
 
           {/* ========================================================================= */}
-          {/* 10th STUDENT VIEW: POST-10th PATHWAYS & ENTRANCE EXAMINATIONS             */}
+          {/* ========================================================================= */}
+          {/* 10th STUDENT VIEW: POST-10th PATHWAYS                                     */}
           {/* ========================================================================= */}
           {currentStage === "class_10" && tenthView === "options" && (
             <motion.div
@@ -1026,71 +1023,22 @@ export default function CareerPathwaysModal({
               <div className="flex items-center justify-between pb-1">
                 <div className="flex items-center gap-2 text-xs">
                   <span className="font-semibold text-[#8E8E9C] uppercase tracking-wider">
-                    Post-10th Pathways & Entrance Exams
+                    Post-10th Pathways
                   </span>
                 </div>
                 <span className="text-xs text-pink-400 font-semibold px-2.5 py-0.5 rounded-full bg-pink-500/10 border border-pink-500/20">
-                  State Board Entrances
+                  Class 10
                 </span>
               </div>
 
-              {/* Entrance Exams Section: After 10th */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#161624] to-[#12121C] border border-pink-500/40 shadow-xl space-y-4 ring-1 ring-pink-500/30">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-xl bg-pink-500/15 border border-pink-500/30 flex items-center justify-center text-pink-400 shrink-0">
-                      <Award className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm sm:text-base font-bold text-white flex items-center gap-2">
-                        <span>Entrance Exams (After 10th)</span>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-pink-500/15 text-pink-300 font-semibold border border-pink-500/30">
-                          2 Examinations
-                        </span>
-                      </h4>
-                      <p className="text-xs text-[#8E8E9C] mt-0.5">
-                        State-level entrance examinations and direct admission pathways:
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                  {ENTRANCE_EXAMS_10TH.map((exam, idx) => (
-                    <div
-                      key={idx}
-                      className="p-3.5 rounded-xl bg-[#181826] border border-[#2B2B3C] hover:border-pink-500/40 hover:bg-[#1B1B2A] transition-all flex items-center justify-between gap-3 group shadow-xs"
-                    >
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-extrabold text-sm text-pink-300 tracking-tight group-hover:text-pink-200">
-                            {exam.name}
-                          </span>
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-pink-500/10 text-pink-400 border border-pink-500/20 font-bold">
-                            {exam.badge}
-                          </span>
-                        </div>
-                        <p className="text-xs text-[#CBCBD8] mt-1 flex items-center gap-1.5">
-                          <span className="text-[#6E6E82]">—</span>
-                          <span className="font-medium text-white/90">{exam.target}</span>
-                        </p>
-                      </div>
-                      <div className="w-7 h-7 rounded-full bg-pink-500/10 flex items-center justify-center text-pink-400 shrink-0 group-hover:scale-110 transition-transform">
-                        <ArrowUpRight className="w-3.5 h-3.5" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               {/* Symmetric Higher Educational Pathways Navigation */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-[#181824] to-[#14141E] border border-[#2B2B3C] space-y-3.5 shadow-md">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-amber-400/10 border border-amber-400/30 flex items-center justify-center text-amber-400 shrink-0">
-                    <Sparkles className="w-4 h-4" />
+              <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-br from-[#181824] to-[#14141E] border border-[#2B2B3C] space-y-4 shadow-lg ring-1 ring-pink-500/20">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-pink-500/15 border border-pink-500/30 flex items-center justify-center text-pink-400 shrink-0">
+                    <Compass className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    <h4 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
                       <span>Explore Higher Educational Pathways</span>
                     </h4>
                     <p className="text-xs text-[#8E8E9C] mt-0.5">
@@ -1099,21 +1047,21 @@ export default function CareerPathwaysModal({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
                   <button
                     type="button"
                     onClick={() => handleResetAll("intermediate")}
-                    className="p-3.5 rounded-xl bg-[#181826] border border-amber-400/30 hover:border-amber-400/60 hover:bg-[#1E1E2C] transition-all flex items-center justify-between gap-3 text-left cursor-pointer group shadow-xs"
+                    className="p-4 rounded-xl bg-[#181826] border border-amber-400/30 hover:border-amber-400/60 hover:bg-[#1E1E2C] transition-all flex items-center justify-between gap-3 text-left cursor-pointer group shadow-sm hover:scale-[1.01]"
                   >
                     <div>
-                      <span className="font-bold text-sm text-amber-300 group-hover:text-amber-200 block">
+                      <span className="font-bold text-sm sm:text-base text-amber-300 group-hover:text-amber-200 block">
                         Inter / Diploma Pathways
                       </span>
-                      <span className="text-[11px] text-[#8E8E9C] mt-0.5 block">
+                      <span className="text-xs text-[#8E8E9C] mt-1 block leading-relaxed">
                         14 career subgroups & 11 major entrance exams
                       </span>
                     </div>
-                    <div className="w-7 h-7 rounded-full bg-amber-400/10 text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                    <div className="w-8 h-8 rounded-full bg-amber-400/10 text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                       <ArrowUpRight className="w-4 h-4" />
                     </div>
                   </button>
@@ -1121,17 +1069,17 @@ export default function CareerPathwaysModal({
                   <button
                     type="button"
                     onClick={() => handleResetAll("b_tech")}
-                    className="p-3.5 rounded-xl bg-[#181826] border border-blue-400/30 hover:border-blue-400/60 hover:bg-[#1E1E2C] transition-all flex items-center justify-between gap-3 text-left cursor-pointer group shadow-xs"
+                    className="p-4 rounded-xl bg-[#181826] border border-blue-400/30 hover:border-blue-400/60 hover:bg-[#1E1E2C] transition-all flex items-center justify-between gap-3 text-left cursor-pointer group shadow-sm hover:scale-[1.01]"
                   >
                     <div>
-                      <span className="font-bold text-sm text-blue-300 group-hover:text-blue-200 block">
+                      <span className="font-bold text-sm sm:text-base text-blue-300 group-hover:text-blue-200 block">
                         Undergraduate Pathways
                       </span>
-                      <span className="text-[11px] text-[#8E8E9C] mt-0.5 block">
+                      <span className="text-xs text-[#8E8E9C] mt-1 block leading-relaxed">
                         Degree tracks, placements, GATE & civil services
                       </span>
                     </div>
-                    <div className="w-7 h-7 rounded-full bg-blue-400/10 text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+                    <div className="w-8 h-8 rounded-full bg-blue-400/10 text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                       <ArrowUpRight className="w-4 h-4" />
                     </div>
                   </button>
