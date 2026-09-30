@@ -175,7 +175,7 @@ export default function OverviewCards({
 
         <div className="flex items-center justify-between z-10">
           <span className="px-3 py-1 rounded-full text-[11px] font-bold bg-[#831843]/20 text-[#500724] tracking-wide backdrop-blur-xs">
-            Pathways
+            Techbits
           </span>
           <div className="w-9 h-9 rounded-full bg-white text-black flex items-center justify-center font-bold shadow-md transition-transform group-hover:scale-110">
             <ArrowUpRight className="w-4 h-4 stroke-[2.5]" />
@@ -184,10 +184,10 @@ export default function OverviewCards({
 
         <div className="z-10 mt-auto">
           <h3 className="font-extrabold text-xl sm:text-2xl text-[#500724] tracking-tight leading-none mb-1 group-hover:text-black transition-colors">
-            Career Pathways
+            Techbits
           </h3>
           <p className="text-xs font-semibold text-[#700A38]/80">
-            Interactive Career Map
+            Latest TechNews
           </p>
         </div>
       </motion.div>
